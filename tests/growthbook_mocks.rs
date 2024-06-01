@@ -1,8 +1,7 @@
-use reqwest::header::CONTENT_TYPE;
 use reqwest::StatusCode;
 use serde_json::json;
 use uuid::Uuid;
-use wiremock::matchers::{header, method, path};
+use wiremock::matchers::{method, path};
 use wiremock::{Mock, MockServer, ResponseTemplate};
 
 pub struct GrowthbookGatewayMock;
@@ -26,7 +25,6 @@ impl GrowthbookGatewayMock {
         });
         Mock::given(method("GET"))
             .and(path(format!("/api/features/{sdk}")))
-            .and(header(CONTENT_TYPE, "application/json"))
             .respond_with(
                 ResponseTemplate::new(status_code.as_u16()).set_body_string(body.to_string()),
             )
@@ -60,7 +58,6 @@ impl GrowthbookGatewayMock {
         });
         Mock::given(method("GET"))
             .and(path(format!("/api/features/{sdk}")))
-            .and(header(CONTENT_TYPE, "application/json"))
             .respond_with(
                 ResponseTemplate::new(status_code.as_u16()).set_body_string(body.to_string()),
             )
@@ -95,40 +92,6 @@ impl GrowthbookGatewayMock {
         });
         Mock::given(method("GET"))
             .and(path(format!("/api/features/{sdk}")))
-            .and(header(CONTENT_TYPE, "application/json"))
-            .respond_with(
-                ResponseTemplate::new(status_code.as_u16()).set_body_string(body.to_string()),
-            )
-            .mount(mock_server)
-            .await;
-    }
-
-    #[allow(dead_code)]
-    pub async fn rollout_rule_condition(
-        mock_server: &MockServer,
-        sdk: Uuid,
-        flag_enabled: bool,
-        coverage: f32,
-        status_code: StatusCode,
-    ) {
-        let body = json!({
-            "status": 200,
-            "features": {
-                "flag": {
-                    "defaultValue": !flag_enabled,
-                    "rules": [
-                        {
-                            "force": flag_enabled,
-                            "coverage": coverage
-                        }
-                    ]
-                }
-            },
-            "dateUpdated": "2024-05-29T18:43:22.153Z"
-        });
-        Mock::given(method("GET"))
-            .and(path(format!("/api/features/{sdk}")))
-            .and(header(CONTENT_TYPE, "application/json"))
             .respond_with(
                 ResponseTemplate::new(status_code.as_u16()).set_body_string(body.to_string()),
             )
@@ -162,7 +125,6 @@ impl GrowthbookGatewayMock {
         });
         Mock::given(method("GET"))
             .and(path(format!("/api/features/{sdk}")))
-            .and(header(CONTENT_TYPE, "application/json"))
             .respond_with(
                 ResponseTemplate::new(status_code.as_u16()).set_body_string(body.to_string()),
             )
@@ -199,7 +161,6 @@ impl GrowthbookGatewayMock {
         });
         Mock::given(method("GET"))
             .and(path(format!("/api/features/{sdk}")))
-            .and(header(CONTENT_TYPE, "application/json"))
             .respond_with(
                 ResponseTemplate::new(status_code.as_u16()).set_body_string(body.to_string()),
             )
@@ -236,7 +197,6 @@ impl GrowthbookGatewayMock {
         });
         Mock::given(method("GET"))
             .and(path(format!("/api/features/{sdk}")))
-            .and(header(CONTENT_TYPE, "application/json"))
             .respond_with(
                 ResponseTemplate::new(status_code.as_u16()).set_body_string(body.to_string()),
             )
@@ -273,7 +233,6 @@ impl GrowthbookGatewayMock {
         });
         Mock::given(method("GET"))
             .and(path(format!("/api/features/{sdk}")))
-            .and(header(CONTENT_TYPE, "application/json"))
             .respond_with(
                 ResponseTemplate::new(status_code.as_u16()).set_body_string(body.to_string()),
             )
@@ -310,7 +269,6 @@ impl GrowthbookGatewayMock {
         });
         Mock::given(method("GET"))
             .and(path(format!("/api/features/{sdk}")))
-            .and(header(CONTENT_TYPE, "application/json"))
             .respond_with(
                 ResponseTemplate::new(status_code.as_u16()).set_body_string(body.to_string()),
             )
@@ -348,7 +306,6 @@ impl GrowthbookGatewayMock {
         });
         Mock::given(method("GET"))
             .and(path(format!("/api/features/{sdk}")))
-            .and(header(CONTENT_TYPE, "application/json"))
             .respond_with(
                 ResponseTemplate::new(status_code.as_u16()).set_body_string(body.to_string()),
             )
@@ -388,7 +345,6 @@ impl GrowthbookGatewayMock {
         });
         Mock::given(method("GET"))
             .and(path(format!("/api/features/{sdk}")))
-            .and(header(CONTENT_TYPE, "application/json"))
             .respond_with(
                 ResponseTemplate::new(status_code.as_u16()).set_body_string(body.to_string()),
             )
@@ -446,7 +402,6 @@ impl GrowthbookGatewayMock {
         });
         Mock::given(method("GET"))
             .and(path(format!("/api/features/{sdk}")))
-            .and(header(CONTENT_TYPE, "application/json"))
             .respond_with(
                 ResponseTemplate::new(status_code.as_u16()).set_body_string(body.to_string()),
             )

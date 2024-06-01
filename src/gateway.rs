@@ -1,13 +1,15 @@
-use reqwest::header::CONTENT_TYPE;
+use reqwest::header::USER_AGENT;
 use reqwest_middleware::ClientWithMiddleware;
 
+use crate::dto::GrowthBookResponse;
+use crate::env::Environment;
 use crate::error::GrowthbookError;
 use crate::infra::HttpClient;
-use crate::model::GrowthBookResponse;
 
 #[derive(Clone, Debug)]
 pub struct GrowthbookGateway {
     pub url: String,
+    pub user_agent: String,
     pub client: ClientWithMiddleware,
 }
 
@@ -15,6 +17,11 @@ impl GrowthbookGateway {
     pub fn new(url: &str, request_timeout: u64) -> Result<Self, GrowthbookError> {
         Ok(Self {
             url: String::from(url),
+            user_agent: format!(
+                "{}/{}",
+                Environment::string_or_default("CARGO_PKG_NAME", "growthbook-rust-sdk"),
+                Environment::string_or_default("CARGO_PKG_VERSION", "1.0.0")
+            ),
             client: HttpClient::create_http_client("growthbook", request_timeout)
                 .map_err(GrowthbookError::from)?,
         })
@@ -25,7 +32,7 @@ impl GrowthbookGateway {
         let result = self
             .client
             .get(url.clone())
-            .header(CONTENT_TYPE, "application/json")
+            .header(USER_AGENT, self.user_agent.clone())
             .send()
             .await
             .map_err(GrowthbookError::from)?;

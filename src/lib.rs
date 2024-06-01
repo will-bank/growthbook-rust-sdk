@@ -1,9 +1,10 @@
+mod dto;
 mod env;
-pub mod error;
+mod error;
 mod extensions;
-pub mod gateway;
+mod feature;
+mod gateway;
 pub mod growthbook;
-pub mod hash;
-pub mod infra;
-mod model;
-mod rule_checker;
+mod hash;
+mod infra;
+pub mod model;
