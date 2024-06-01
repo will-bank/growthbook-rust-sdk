@@ -36,6 +36,9 @@ impl GrowthbookError {
         let value = match flag {
             Flag::BooleanFlag(it) => it.enabled.to_string(),
             Flag::StringFlag(it) => it.value,
+            Flag::ObjectFlag(it) => it
+                .value::<String>()
+                .unwrap_or(String::from("'ObjectFlag unknown value'")),
             Flag::InvalidFlag() => String::from("'INVALID TYPE'"),
         };
 
@@ -96,6 +99,15 @@ impl From<VarError> for GrowthbookError {
 
 impl From<ParseIntError> for GrowthbookError {
     fn from(error: ParseIntError) -> Self {
+        Self {
+            code: GrowthbookErrorCode::ParseError,
+            message: error.to_string(),
+        }
+    }
+}
+
+impl From<serde_json::Error> for GrowthbookError {
+    fn from(error: serde_json::Error) -> Self {
         Self {
             code: GrowthbookErrorCode::ParseError,
             message: error.to_string(),

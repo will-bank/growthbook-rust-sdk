@@ -1,5 +1,5 @@
 use reqwest::StatusCode;
-use serde_json::json;
+use serde_json::{json, Value};
 use uuid::Uuid;
 use wiremock::matchers::{method, path};
 use wiremock::{Mock, MockServer, ResponseTemplate};
@@ -408,11 +408,37 @@ impl GrowthbookGatewayMock {
             .mount(mock_server)
             .await;
     }
+
     #[allow(dead_code)]
     pub async fn string_value(
         mock_server: &MockServer,
         sdk: Uuid,
         value: String,
+        status_code: StatusCode,
+    ) {
+        let body = json!({
+            "status": 200,
+            "features": {
+                "flag": {
+                    "defaultValue": value
+                }
+            },
+            "dateUpdated": "2024-05-29T18:43:22.153Z"
+        });
+        Mock::given(method("GET"))
+            .and(path(format!("/api/features/{sdk}")))
+            .respond_with(
+                ResponseTemplate::new(status_code.as_u16()).set_body_string(body.to_string()),
+            )
+            .mount(mock_server)
+            .await;
+    }
+
+    #[allow(dead_code)]
+    pub async fn object_value(
+        mock_server: &MockServer,
+        sdk: Uuid,
+        value: Value,
         status_code: StatusCode,
     ) {
         let body = json!({

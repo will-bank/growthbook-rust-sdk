@@ -5,7 +5,7 @@ use tracing::{error, info};
 
 use crate::error::GrowthbookError;
 use crate::gateway::GrowthbookGateway;
-use crate::model::{BooleanFlag, Flag, FlagCreator, StringFlag};
+use crate::model::{BooleanFlag, Flag, FlagCreator, ObjectFlag, StringFlag};
 
 pub struct Growthbook {
     gateway: GrowthbookGateway,
@@ -60,7 +60,30 @@ impl Growthbook {
 
         match flag {
             Flag::StringFlag(it) => Ok(it),
-            it => Err(GrowthbookError::invalid_response_value_type(it, "boolean")),
+            it => Err(GrowthbookError::invalid_response_value_type(it, "String")),
+        }
+    }
+
+    pub async fn get_object_value(
+        &self,
+        sdk_key: &str,
+        flag_name: &str,
+        default_response: &Value,
+        user_attributes: Option<&HashMap<String, Vec<String>>>,
+    ) -> Result<ObjectFlag, GrowthbookError> {
+        let flag = self
+            .check(
+                sdk_key,
+                flag_name,
+                default_response.clone(),
+                false,
+                user_attributes,
+            )
+            .await;
+
+        match flag {
+            Flag::ObjectFlag(it) => Ok(it),
+            it => Err(GrowthbookError::invalid_response_value_type(it, "Object")),
         }
     }
 

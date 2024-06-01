@@ -1,8 +1,12 @@
+use serde::Deserialize;
 use serde_json::Value;
+
+use crate::error::GrowthbookError;
 
 pub enum Flag {
     BooleanFlag(BooleanFlag),
     StringFlag(StringFlag),
+    ObjectFlag(ObjectFlag),
     InvalidFlag(),
 }
 
@@ -16,6 +20,8 @@ impl FlagCreator for Value {
             Flag::BooleanFlag(BooleanFlag::new(self, experiment_key))
         } else if self.is_string() {
             Flag::StringFlag(StringFlag::new(self, experiment_key))
+        } else if self.is_object() {
+            Flag::ObjectFlag(ObjectFlag::new(self, experiment_key))
         } else {
             Flag::InvalidFlag()
         }
@@ -47,5 +53,26 @@ impl StringFlag {
             value: String::from(value.as_str().unwrap_or_default()),
             experiment_key,
         }
+    }
+}
+
+pub struct ObjectFlag {
+    value: Value,
+    pub experiment_key: Option<String>,
+}
+
+impl ObjectFlag {
+    fn new(value: &Value, experiment_key: Option<String>) -> Self {
+        Self {
+            value: value.clone(),
+            experiment_key,
+        }
+    }
+
+    pub fn value<T>(&self) -> Result<T, GrowthbookError>
+    where
+        for<'a> T: Deserialize<'a>,
+    {
+        serde_json::from_value(self.value.clone()).map_err(GrowthbookError::from)
     }
 }
