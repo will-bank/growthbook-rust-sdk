@@ -1,5 +1,7 @@
 # GrowthBook Rust SDK
 
+[![Crates.io](https://img.shields.io/crates/l/datadog-tracing)](LICENSE)
+
 Non-official GrowthBook SDK for Rust services.
 
 This crate provide an easy way to retrieve a feature value using SDK-KEY.
