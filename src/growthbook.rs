@@ -3,7 +3,6 @@ use std::collections::HashMap;
 use serde_json::Value;
 use tracing::{error, info};
 
-use crate::env::Environment;
 use crate::error::GrowthbookError;
 use crate::gateway::GrowthbookGateway;
 use crate::model::{BooleanFlag, Flag, FlagCreator};
@@ -13,13 +12,9 @@ pub struct Growthbook {
 }
 
 impl Growthbook {
-    pub fn new() -> Result<Self, GrowthbookError> {
-        let url = Environment::string("GROWTHBOOK_URL")?;
-        let request_timeout =
-            Environment::u64_or_default("GROWTHBOOK_REQUEST_TIMEOUT_IN_MILLIS", 500);
-
+    pub fn new(url: &str, timeout_in_millis: u64) -> Result<Self, GrowthbookError> {
         Ok(Self {
-            gateway: GrowthbookGateway::new(&url, request_timeout)?,
+            gateway: GrowthbookGateway::new(url, timeout_in_millis)?,
         })
     }
 

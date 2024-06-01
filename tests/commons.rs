@@ -1,10 +1,10 @@
-use std::env;
 use std::net::{SocketAddr, TcpListener};
 
-use growthbook_rust_sdk::growthbook::Growthbook;
 use rand::Rng;
 use test_context::AsyncTestContext;
 use wiremock::MockServer;
+
+use growthbook_rust_sdk::growthbook::Growthbook;
 
 pub struct TestContext {
     pub mock_server: MockServer,
@@ -15,9 +15,8 @@ impl AsyncTestContext for TestContext {
     async fn setup() -> TestContext {
         let mock_server = create_mock_server().await;
 
-        env::set_var("GROWTHBOOK_URL", mock_server.uri());
-
-        let growthbook = Growthbook::new().expect("Failed to create growthbook gateway");
+        let growthbook =
+            Growthbook::new(&mock_server.uri(), 500).expect("Failed to create growthbook gateway");
 
         TestContext {
             mock_server,
