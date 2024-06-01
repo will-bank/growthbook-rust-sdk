@@ -21,11 +21,10 @@ mod test {
     ) -> Result<(), Box<dyn std::error::Error>> {
         let gb_sdk = Uuid::now_v7();
 
-        GrowthbookGatewayMock::lt_rule(
+        GrowthbookGatewayMock::multiple_rule_condition(
             &ctx.mock_server,
             gb_sdk,
             false,
-            "1",
             StatusCode::GATEWAY_TIMEOUT,
         )
         .await;
@@ -33,7 +32,7 @@ mod test {
         let flag_state = ctx
             .growthbook
             .is_on(&gb_sdk.to_string(), "flag", true, None)
-            .await;
+            .await?;
 
         assert!(flag_state.enabled);
 
@@ -43,20 +42,28 @@ mod test {
     #[test_context(TestContext)]
     #[rstest]
     #[tokio::test]
-    async fn should_return_enabled_false_when_is_equals(
+    async fn should_return_enabled_false_when_none_attribute_match(
         ctx: &mut TestContext,
     ) -> Result<(), Box<dyn std::error::Error>> {
         let gb_sdk = Uuid::now_v7();
 
-        GrowthbookGatewayMock::lt_rule(&ctx.mock_server, gb_sdk, true, "1.2.3", StatusCode::OK)
-            .await;
+        GrowthbookGatewayMock::multiple_rule_condition(
+            &ctx.mock_server,
+            gb_sdk,
+            true,
+            StatusCode::OK,
+        )
+        .await;
 
-        let map = HashMap::from([(String::from("version"), vec![String::from("1.2.3")])]);
+        let map = HashMap::from([
+            (String::from("any-id"), vec![Uuid::now_v7().to_string()]),
+            (String::from("any-key"), vec![Uuid::now_v7().to_string()]),
+        ]);
 
         let flag_state = ctx
             .growthbook
             .is_on(&gb_sdk.to_string(), "flag", true, Some(&map))
-            .await;
+            .await?;
 
         assert!(!flag_state.enabled);
 
@@ -66,68 +73,104 @@ mod test {
     #[test_context(TestContext)]
     #[rstest]
     #[tokio::test]
-    async fn should_return_enabled_true_when_is_less_then(
+    async fn should_return_enabled_false_when_only_id_match(
         ctx: &mut TestContext,
     ) -> Result<(), Box<dyn std::error::Error>> {
         let gb_sdk = Uuid::now_v7();
 
-        GrowthbookGatewayMock::lt_rule(&ctx.mock_server, gb_sdk, true, "1.2.3", StatusCode::OK)
-            .await;
+        GrowthbookGatewayMock::multiple_rule_condition(
+            &ctx.mock_server,
+            gb_sdk,
+            true,
+            StatusCode::OK,
+        )
+        .await;
 
-        let map = HashMap::from([(String::from("version"), vec![String::from("1.2.2")])]);
+        let map = HashMap::from([
+            (
+                String::from("any-id"),
+                vec![String::from("018fcf11-bb67-7789-8d10-fcbb7de4ff7b")],
+            ),
+            (String::from("any-key"), vec![Uuid::now_v7().to_string()]),
+        ]);
 
         let flag_state = ctx
             .growthbook
             .is_on(&gb_sdk.to_string(), "flag", true, Some(&map))
-            .await;
+            .await?;
+
+        assert!(!flag_state.enabled);
+
+        Ok(())
+    }
+
+    #[test_context(TestContext)]
+    #[rstest]
+    #[tokio::test]
+    async fn should_return_enabled_false_when_only_key_match(
+        ctx: &mut TestContext,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        let gb_sdk = Uuid::now_v7();
+
+        GrowthbookGatewayMock::multiple_rule_condition(
+            &ctx.mock_server,
+            gb_sdk,
+            true,
+            StatusCode::OK,
+        )
+        .await;
+
+        let map = HashMap::from([
+            (String::from("any-id"), vec![Uuid::now_v7().to_string()]),
+            (
+                String::from("any-key"),
+                vec![String::from("018fcf64-1827-709a-a8ae-7d206aafb5e2")],
+            ),
+        ]);
+
+        let flag_state = ctx
+            .growthbook
+            .is_on(&gb_sdk.to_string(), "flag", true, Some(&map))
+            .await?;
+
+        assert!(!flag_state.enabled);
+
+        Ok(())
+    }
+
+    #[test_context(TestContext)]
+    #[rstest]
+    #[tokio::test]
+    async fn should_return_enabled_true_when_all_attributes_matches(
+        ctx: &mut TestContext,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        let gb_sdk = Uuid::now_v7();
+
+        GrowthbookGatewayMock::multiple_rule_condition(
+            &ctx.mock_server,
+            gb_sdk,
+            true,
+            StatusCode::OK,
+        )
+        .await;
+
+        let map = HashMap::from([
+            (
+                String::from("any-id"),
+                vec![String::from("018fcf11-bb67-7789-8d10-fcbb7de4ff7b")],
+            ),
+            (
+                String::from("any-key"),
+                vec![String::from("018fcf64-1827-709a-a8ae-7d206aafb5e2")],
+            ),
+        ]);
+
+        let flag_state = ctx
+            .growthbook
+            .is_on(&gb_sdk.to_string(), "flag", true, Some(&map))
+            .await?;
 
         assert!(flag_state.enabled);
-
-        Ok(())
-    }
-
-    #[test_context(TestContext)]
-    #[rstest]
-    #[tokio::test]
-    async fn should_return_enabled_false_when_is_greater_then(
-        ctx: &mut TestContext,
-    ) -> Result<(), Box<dyn std::error::Error>> {
-        let gb_sdk = Uuid::now_v7();
-
-        GrowthbookGatewayMock::lt_rule(&ctx.mock_server, gb_sdk, true, "1.2.3", StatusCode::OK)
-            .await;
-
-        let map = HashMap::from([(String::from("version"), vec![String::from("1.2.4")])]);
-
-        let flag_state = ctx
-            .growthbook
-            .is_on(&gb_sdk.to_string(), "flag", true, Some(&map))
-            .await;
-
-        assert!(!flag_state.enabled);
-
-        Ok(())
-    }
-
-    #[test_context(TestContext)]
-    #[rstest]
-    #[tokio::test]
-    async fn should_return_enabled_true_when_attribute_is_missing(
-        ctx: &mut TestContext,
-    ) -> Result<(), Box<dyn std::error::Error>> {
-        let gb_sdk = Uuid::now_v7();
-
-        GrowthbookGatewayMock::lt_rule(&ctx.mock_server, gb_sdk, true, "1.2.3", StatusCode::OK)
-            .await;
-
-        let map = HashMap::from([(String::from("any"), vec![String::from("1.2.4")])]);
-
-        let flag_state = ctx
-            .growthbook
-            .is_on(&gb_sdk.to_string(), "flag", true, Some(&map))
-            .await;
-
-        assert!(!flag_state.enabled);
 
         Ok(())
     }

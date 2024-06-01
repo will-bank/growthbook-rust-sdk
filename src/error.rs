@@ -3,6 +3,10 @@ use std::error::Error;
 use std::fmt::{Display, Formatter};
 use std::num::ParseIntError;
 
+use reqwest::Response;
+
+use crate::model::Flag;
+
 #[derive(Debug)]
 pub enum GrowthbookErrorCode {
     GenericError,
@@ -11,6 +15,7 @@ pub enum GrowthbookErrorCode {
     MissingEnvironmentVariable,
     GrowthbookGateway,
     GrowthbookGatewayDeserialize,
+    InvalidResponseValueType,
 }
 
 #[derive(Debug)]
@@ -24,6 +29,19 @@ impl GrowthbookError {
         GrowthbookError {
             code,
             message: String::from(message),
+        }
+    }
+
+    pub fn invalid_response_value_type(flag: Flag, expected_type: &str) -> Self {
+        let value = match flag {
+            Flag::BooleanFlag(it) => it.enabled.to_string(),
+            Flag::StringFlag(it) => it.value,
+            Flag::InvalidFlag() => String::from("'INVALID TYPE'"),
+        };
+
+        GrowthbookError {
+            code: GrowthbookErrorCode::InvalidResponseValueType,
+            message: format!("Invalid value={value} for expected type={expected_type}"),
         }
     }
 }
@@ -81,6 +99,15 @@ impl From<ParseIntError> for GrowthbookError {
         Self {
             code: GrowthbookErrorCode::ParseError,
             message: error.to_string(),
+        }
+    }
+}
+
+impl From<Response> for GrowthbookError {
+    fn from(response: Response) -> Self {
+        Self {
+            code: GrowthbookErrorCode::GrowthbookGateway,
+            message: format!("Failed to get features. StatusCode={}", response.status()),
         }
     }
 }

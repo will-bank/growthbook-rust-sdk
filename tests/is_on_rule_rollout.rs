@@ -34,7 +34,7 @@ mod test {
         let flag_state = ctx
             .growthbook
             .is_on(&gb_sdk.to_string(), "flag", true, None)
-            .await;
+            .await?;
 
         assert!(flag_state.enabled);
 
@@ -63,7 +63,7 @@ mod test {
         let flag_state = ctx
             .growthbook
             .is_on(&gb_sdk.to_string(), "flag", true, Some(&map))
-            .await;
+            .await?;
 
         assert!(!flag_state.enabled);
 
@@ -92,7 +92,7 @@ mod test {
         let flag_state = ctx
             .growthbook
             .is_on(&gb_sdk.to_string(), "flag", false, Some(&map))
-            .await;
+            .await?;
 
         assert!(flag_state.enabled);
 
@@ -124,7 +124,7 @@ mod test {
         let flag_state = ctx
             .growthbook
             .is_on(&gb_sdk.to_string(), "flag", false, Some(&map))
-            .await;
+            .await?;
 
         assert!(flag_state.enabled);
 
@@ -156,7 +156,7 @@ mod test {
         let flag_state = ctx
             .growthbook
             .is_on(&gb_sdk.to_string(), "flag", false, Some(&map))
-            .await;
+            .await?;
 
         assert!(!flag_state.enabled);
 
@@ -188,7 +188,7 @@ mod test {
         let flag_state = ctx
             .growthbook
             .is_on(&gb_sdk.to_string(), "flag", true, Some(&map))
-            .await;
+            .await?;
 
         assert!(!flag_state.enabled);
 

@@ -1,4 +1,5 @@
 use reqwest::header::USER_AGENT;
+use reqwest::StatusCode;
 use reqwest_middleware::ClientWithMiddleware;
 
 use crate::dto::GrowthBookResponse;
@@ -37,9 +38,12 @@ impl GrowthbookGateway {
             .await
             .map_err(GrowthbookError::from)?;
 
-        result
-            .json::<GrowthBookResponse>()
-            .await
-            .map_err(GrowthbookError::from)
+        match result.status() {
+            StatusCode::OK => result
+                .json::<GrowthBookResponse>()
+                .await
+                .map_err(GrowthbookError::from),
+            _ => Err(GrowthbookError::from(result))
+        }
     }
 }
