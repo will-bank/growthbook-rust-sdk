@@ -26,7 +26,7 @@ mod test {
             Uuid::now_v7().to_string(),
             StatusCode::GATEWAY_TIMEOUT,
         )
-            .await;
+        .await;
 
         let string_flag = ctx
             .growthbook
@@ -41,9 +41,7 @@ mod test {
     #[test_context(TestContext)]
     #[rstest]
     #[tokio::test]
-    async fn should_return_value(
-        ctx: &mut TestContext,
-    ) -> Result<(), Box<dyn std::error::Error>> {
+    async fn should_return_value(ctx: &mut TestContext) -> Result<(), Box<dyn std::error::Error>> {
         let gb_sdk = Uuid::now_v7();
         let expected_value = Uuid::now_v7().to_string();
 
@@ -53,11 +51,16 @@ mod test {
             expected_value.clone(),
             StatusCode::OK,
         )
-            .await;
+        .await;
 
         let string_flag = ctx
             .growthbook
-            .get_string_value(&gb_sdk.to_string(), "flag", &Uuid::now_v7().to_string(), None)
+            .get_string_value(
+                &gb_sdk.to_string(),
+                "flag",
+                &Uuid::now_v7().to_string(),
+                None,
+            )
             .await?;
 
         assert_eq!(expected_value, string_flag.value);

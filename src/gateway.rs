@@ -43,7 +43,7 @@ impl GrowthbookGateway {
                 .json::<GrowthBookResponse>()
                 .await
                 .map_err(GrowthbookError::from),
-            _ => Err(GrowthbookError::from(result))
+            _ => Err(GrowthbookError::from(result)),
         }
     }
 }
