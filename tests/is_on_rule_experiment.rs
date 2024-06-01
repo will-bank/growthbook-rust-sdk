@@ -52,14 +52,14 @@ mod test {
             &ctx.mock_server,
             gb_sdk,
             true,
-            0.5,
+            1.0,
             StatusCode::OK,
         )
         .await;
 
         let map = HashMap::from([(
             String::from("any-id"),
-            vec![String::from("018fcf36-d39b-705c-a800-dc8bdc5964be")],
+            vec![String::from("018fd04d-83ce-73c7-af80-77edbf36576d")],
         )]);
 
         let flag_state = ctx
@@ -95,7 +95,7 @@ mod test {
 
         let map = HashMap::from([(
             String::from("any-id"),
-            vec![String::from("018fd04d-83ce-73c7-af80-77edbf36576d")],
+            vec![String::from("018fcf36-d39b-705c-a800-dc8bdc5964be")],
         )]);
 
         let flag_state = ctx
