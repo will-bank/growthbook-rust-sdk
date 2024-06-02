@@ -458,4 +458,30 @@ impl GrowthbookGatewayMock {
             .mount(mock_server)
             .await;
     }
+
+    #[allow(dead_code)]
+    pub async fn expect_times(
+        mock_server: &MockServer,
+        sdk: Uuid,
+        times: u64,
+        status_code: StatusCode,
+    ) {
+        let body = json!({
+            "status": 200,
+            "features": {
+                "flag": {
+                    "defaultValue": true
+                }
+            },
+            "dateUpdated": "2024-05-29T18:43:22.153Z"
+        });
+        Mock::given(method("GET"))
+            .and(path(format!("/api/features/{sdk}")))
+            .respond_with(
+                ResponseTemplate::new(status_code.as_u16()).set_body_string(body.to_string()),
+            )
+            .expect(times)
+            .mount(mock_server)
+            .await;
+    }
 }

@@ -12,9 +12,9 @@ pub struct Growthbook {
 }
 
 impl Growthbook {
-    pub fn new(url: &str, timeout_in_millis: u64) -> Result<Self, GrowthbookError> {
+    pub fn new(url: &str) -> Result<Self, GrowthbookError> {
         Ok(Self {
-            gateway: GrowthbookGateway::new(url, timeout_in_millis)?,
+            gateway: GrowthbookGateway::new(url)?,
         })
     }
 

@@ -3,26 +3,26 @@ use std::collections::HashMap;
 use serde::Deserialize;
 use serde_json::Value;
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct GrowthBookResponse {
     pub features: HashMap<String, Feature>,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct Feature {
     pub default_value: Value,
     pub rules: Option<Vec<FeatureRule>>,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct FeatureRuleMeta {
     pub key: String,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone)]
 #[serde(untagged)]
 pub enum FeatureRule {
     Experiment(FeatureRuleExperiment),
@@ -30,7 +30,7 @@ pub enum FeatureRule {
     Force(FeatureRuleForce), // needs to be the last one
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone)]
 #[serde(untagged)]
 pub enum FeatureRuleCondition {
     String(String),
@@ -44,14 +44,14 @@ pub enum FeatureRuleCondition {
     In(FeatureRuleConditionIn),
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct FeatureRuleForce {
     pub force: Value,
     pub condition: Option<HashMap<String, FeatureRuleCondition>>,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct FeatureRuleRollout {
     pub force: Value,
@@ -60,7 +60,7 @@ pub struct FeatureRuleRollout {
     pub hash_attribute: String,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct FeatureRuleExperiment {
     pub coverage: f32,
@@ -83,56 +83,56 @@ impl FeatureRuleExperiment {
     }
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct FeatureRuleConditionGte {
     #[serde(alias = "$gte")]
     pub gte: String,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct FeatureRuleConditionGt {
     #[serde(alias = "$gt")]
     pub gt: String,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct FeatureRuleConditionLte {
     #[serde(alias = "$lte")]
     pub lte: String,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct FeatureRuleConditionLt {
     #[serde(alias = "$lt")]
     pub lt: String,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct FeatureRuleConditionElemMatchEq {
     #[serde(alias = "$elemMatch")]
     pub elem_match: FeatureRuleConditionEq,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct FeatureRuleConditionNotElemMatchEq {
     #[serde(alias = "$not")]
     pub not: FeatureRuleConditionElemMatchEq,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct FeatureRuleConditionEq {
     #[serde(alias = "$eq")]
     pub eq: String,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct FeatureRuleConditionIn {
     #[serde(alias = "$in")]

@@ -18,7 +18,8 @@ impl FeatureRuleExperiment {
                 let user_coverage_position = Hasher::hash_code(&user_attribute_string);
                 if self.coverage.gt(&user_coverage_position) {
                     for (index, percentage) in self.weights().iter().enumerate() {
-                        let user_weight_position = Hasher::hash_code(&format!("{flag_name}:{user_attribute_string}"));
+                        let user_weight_position =
+                            Hasher::hash_code(&format!("{flag_name}:{user_attribute_string}"));
                         if percentage.gt(&user_weight_position) {
                             return Some((
                                 self.variations[index].clone(),

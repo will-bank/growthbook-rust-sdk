@@ -17,11 +17,15 @@ serde_json = { version = "1.0.113", features = ["preserve_order"] }
 reqwest-tracing = { version = "0.5.0", features = ["opentelemetry_0_21"] }
 tracing = { version = "0.1.40" }
 
+cached = { version = "0.51.3", features = ["default", "async", "proc_macro"]}
+once_cell = { version = "1.19.0" }
+lazy_static = { version = "1.4.0" }
+
 [dev-dependencies]
 tokio = { version = "1.37.0", features = ["full"] }
 tower = { version = "0.4.13", features = ["util"] }
 
-rstest = { version = "0.20.0" }
+rstest = { version = "0.21.0" }
 test-context = { version = "0.3.0" }
 
 wiremock = { version = "0.6.0" }

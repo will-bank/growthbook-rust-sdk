@@ -1,3 +1,4 @@
+use std::env;
 use std::net::{SocketAddr, TcpListener};
 
 use rand::Rng;
@@ -13,10 +14,12 @@ pub struct TestContext {
 
 impl AsyncTestContext for TestContext {
     async fn setup() -> TestContext {
+        env::set_var("is-test-environment", "true");
+
         let mock_server = create_mock_server().await;
 
         let growthbook =
-            Growthbook::new(&mock_server.uri(), 500).expect("Failed to create growthbook gateway");
+            Growthbook::new(&mock_server.uri()).expect("Failed to create growthbook gateway");
 
         TestContext {
             mock_server,

@@ -33,7 +33,9 @@ impl Feature {
                         }
                     }
                     FeatureRule::Experiment(it) => {
-                        if let Some((value, experiment_key)) = it.get_match_value(flag_name, user_attributes) {
+                        if let Some((value, experiment_key)) =
+                            it.get_match_value(flag_name, user_attributes)
+                        {
                             info!(
                                 "Feature {flag_name} value={} for experiment",
                                 self.default_value
