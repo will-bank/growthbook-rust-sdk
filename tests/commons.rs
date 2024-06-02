@@ -1,3 +1,4 @@
+use chrono::Duration;
 use std::env;
 use std::net::{SocketAddr, TcpListener};
 
@@ -18,8 +19,12 @@ impl AsyncTestContext for TestContext {
 
         let mock_server = create_mock_server().await;
 
-        let growthbook =
-            Growthbook::new(&mock_server.uri()).expect("Failed to create growthbook gateway");
+        let growthbook = Growthbook::new(
+            &mock_server.uri(),
+            Duration::milliseconds(500),
+            Duration::milliseconds(100),
+        )
+        .expect("Failed to create growthbook gateway");
 
         TestContext {
             mock_server,

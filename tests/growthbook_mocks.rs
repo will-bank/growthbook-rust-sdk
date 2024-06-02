@@ -23,13 +23,7 @@ impl GrowthbookGatewayMock {
             },
             "dateUpdated": "2024-05-29T18:43:22.153Z"
         });
-        Mock::given(method("GET"))
-            .and(path(format!("/api/features/{sdk}")))
-            .respond_with(
-                ResponseTemplate::new(status_code.as_u16()).set_body_string(body.to_string()),
-            )
-            .mount(mock_server)
-            .await;
+        Self::mock(mock_server, sdk, body, 1, status_code).await;
     }
 
     #[allow(dead_code)]
@@ -56,13 +50,7 @@ impl GrowthbookGatewayMock {
             },
             "dateUpdated": "2024-05-29T18:43:22.153Z"
         });
-        Mock::given(method("GET"))
-            .and(path(format!("/api/features/{sdk}")))
-            .respond_with(
-                ResponseTemplate::new(status_code.as_u16()).set_body_string(body.to_string()),
-            )
-            .mount(mock_server)
-            .await;
+        Self::mock(mock_server, sdk, body, 1, status_code).await;
     }
 
     #[allow(dead_code)]
@@ -90,13 +78,7 @@ impl GrowthbookGatewayMock {
             },
             "dateUpdated": "2024-05-29T18:43:22.153Z"
         });
-        Mock::given(method("GET"))
-            .and(path(format!("/api/features/{sdk}")))
-            .respond_with(
-                ResponseTemplate::new(status_code.as_u16()).set_body_string(body.to_string()),
-            )
-            .mount(mock_server)
-            .await;
+        Self::mock(mock_server, sdk, body, 1, status_code).await;
     }
 
     #[allow(dead_code)]
@@ -123,13 +105,7 @@ impl GrowthbookGatewayMock {
             },
             "dateUpdated": "2024-05-29T18:43:22.153Z"
         });
-        Mock::given(method("GET"))
-            .and(path(format!("/api/features/{sdk}")))
-            .respond_with(
-                ResponseTemplate::new(status_code.as_u16()).set_body_string(body.to_string()),
-            )
-            .mount(mock_server)
-            .await;
+        Self::mock(mock_server, sdk, body, 1, status_code).await;
     }
 
     #[allow(dead_code)]
@@ -159,13 +135,7 @@ impl GrowthbookGatewayMock {
             },
             "dateUpdated": "2024-05-29T18:43:22.153Z"
         });
-        Mock::given(method("GET"))
-            .and(path(format!("/api/features/{sdk}")))
-            .respond_with(
-                ResponseTemplate::new(status_code.as_u16()).set_body_string(body.to_string()),
-            )
-            .mount(mock_server)
-            .await;
+        Self::mock(mock_server, sdk, body, 1, status_code).await;
     }
 
     #[allow(dead_code)]
@@ -195,13 +165,7 @@ impl GrowthbookGatewayMock {
             },
             "dateUpdated": "2024-05-29T18:43:22.153Z"
         });
-        Mock::given(method("GET"))
-            .and(path(format!("/api/features/{sdk}")))
-            .respond_with(
-                ResponseTemplate::new(status_code.as_u16()).set_body_string(body.to_string()),
-            )
-            .mount(mock_server)
-            .await;
+        Self::mock(mock_server, sdk, body, 1, status_code).await;
     }
 
     #[allow(dead_code)]
@@ -231,13 +195,7 @@ impl GrowthbookGatewayMock {
             },
             "dateUpdated": "2024-05-29T18:43:22.153Z"
         });
-        Mock::given(method("GET"))
-            .and(path(format!("/api/features/{sdk}")))
-            .respond_with(
-                ResponseTemplate::new(status_code.as_u16()).set_body_string(body.to_string()),
-            )
-            .mount(mock_server)
-            .await;
+        Self::mock(mock_server, sdk, body, 1, status_code).await;
     }
 
     #[allow(dead_code)]
@@ -267,13 +225,7 @@ impl GrowthbookGatewayMock {
             },
             "dateUpdated": "2024-05-29T18:43:22.153Z"
         });
-        Mock::given(method("GET"))
-            .and(path(format!("/api/features/{sdk}")))
-            .respond_with(
-                ResponseTemplate::new(status_code.as_u16()).set_body_string(body.to_string()),
-            )
-            .mount(mock_server)
-            .await;
+        Self::mock(mock_server, sdk, body, 1, status_code).await;
     }
 
     #[allow(dead_code)]
@@ -304,13 +256,7 @@ impl GrowthbookGatewayMock {
             },
             "dateUpdated": "2024-05-29T18:43:22.153Z"
         });
-        Mock::given(method("GET"))
-            .and(path(format!("/api/features/{sdk}")))
-            .respond_with(
-                ResponseTemplate::new(status_code.as_u16()).set_body_string(body.to_string()),
-            )
-            .mount(mock_server)
-            .await;
+        Self::mock(mock_server, sdk, body, 1, status_code).await;
     }
 
     #[allow(dead_code)]
@@ -343,13 +289,7 @@ impl GrowthbookGatewayMock {
             },
             "dateUpdated": "2024-05-29T18:43:22.153Z"
         });
-        Mock::given(method("GET"))
-            .and(path(format!("/api/features/{sdk}")))
-            .respond_with(
-                ResponseTemplate::new(status_code.as_u16()).set_body_string(body.to_string()),
-            )
-            .mount(mock_server)
-            .await;
+        Self::mock(mock_server, sdk, body, 1, status_code).await;
     }
 
     #[allow(dead_code)]
@@ -400,13 +340,7 @@ impl GrowthbookGatewayMock {
             },
             "dateUpdated": "2024-05-29T18:43:22.153Z"
         });
-        Mock::given(method("GET"))
-            .and(path(format!("/api/features/{sdk}")))
-            .respond_with(
-                ResponseTemplate::new(status_code.as_u16()).set_body_string(body.to_string()),
-            )
-            .mount(mock_server)
-            .await;
+        Self::mock(mock_server, sdk, body, 1, status_code).await;
     }
 
     #[allow(dead_code)]
@@ -425,13 +359,7 @@ impl GrowthbookGatewayMock {
             },
             "dateUpdated": "2024-05-29T18:43:22.153Z"
         });
-        Mock::given(method("GET"))
-            .and(path(format!("/api/features/{sdk}")))
-            .respond_with(
-                ResponseTemplate::new(status_code.as_u16()).set_body_string(body.to_string()),
-            )
-            .mount(mock_server)
-            .await;
+        Self::mock(mock_server, sdk, body, 1, status_code).await;
     }
 
     #[allow(dead_code)]
@@ -450,13 +378,7 @@ impl GrowthbookGatewayMock {
             },
             "dateUpdated": "2024-05-29T18:43:22.153Z"
         });
-        Mock::given(method("GET"))
-            .and(path(format!("/api/features/{sdk}")))
-            .respond_with(
-                ResponseTemplate::new(status_code.as_u16()).set_body_string(body.to_string()),
-            )
-            .mount(mock_server)
-            .await;
+        Self::mock(mock_server, sdk, body, 1, status_code).await;
     }
 
     #[allow(dead_code)]
@@ -475,11 +397,26 @@ impl GrowthbookGatewayMock {
             },
             "dateUpdated": "2024-05-29T18:43:22.153Z"
         });
+        Self::mock(mock_server, sdk, body, times, status_code).await;
+    }
+
+    #[allow(dead_code)]
+    async fn mock(
+        mock_server: &MockServer,
+        sdk: Uuid,
+        body: Value,
+        times: u64,
+        status_code: StatusCode,
+    ) {
+        let response = if status_code.is_success() {
+            ResponseTemplate::new(status_code.as_u16()).set_body_string(body.to_string())
+        } else {
+            ResponseTemplate::new(status_code.as_u16())
+        };
+
         Mock::given(method("GET"))
             .and(path(format!("/api/features/{sdk}")))
-            .respond_with(
-                ResponseTemplate::new(status_code.as_u16()).set_body_string(body.to_string()),
-            )
+            .respond_with(response)
             .expect(times)
             .mount(mock_server)
             .await;

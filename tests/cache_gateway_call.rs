@@ -75,7 +75,7 @@ mod test {
             .is_on(&gb_sdk.to_string(), "flag", false, None)
             .await?;
 
-        thread::sleep(Duration::from_millis(1100));
+        thread::sleep(Duration::from_millis(150));
 
         ctx.growthbook
             .is_on(&gb_sdk.to_string(), "flag", false, None)

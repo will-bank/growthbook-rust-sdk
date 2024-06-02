@@ -13,18 +13,12 @@ Initializing SDK
 
 ```rust
 let gb_url = "HTTP_OR_HTTPS_URL";
-let timeout_in_millis = 500;
-let gb = Growthbook::new(gb_url, timeout_in_millis)?;
+let timeout = chrono::Duration::milliseconds(500);
+let cache_ttl = chrono::Duration::minutes(5);
+let gb = Growthbook::new(gb_url, timeout, cache_ttl)?;
 
-let sdk_key = "SDK_KEY"; // will be used later
+let sdk_key = "SDK_KEY"; // will be used by features
 ```
-
-Environment variables
-
-| Env name                     | Description                                                    | Required | Default value |
-|------------------------------|----------------------------------------------------------------|----------|---------------|
-| GROWTHBOOK_TIMEOUT_IN_MILLIS | Time in milliseconds that the request will wait until it fails | No       | 1000          |
-
 
 ### Boolean feature
 ```rust

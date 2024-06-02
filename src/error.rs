@@ -1,3 +1,4 @@
+use chrono::OutOfRangeError;
 use std::env::VarError;
 use std::error::Error;
 use std::fmt::{Display, Formatter};
@@ -12,6 +13,7 @@ pub enum GrowthbookErrorCode {
     GenericError,
     SerdeDeserialize,
     ParseError,
+    DurationOutOfRangeError,
     MissingEnvironmentVariable,
     GrowthbookGateway,
     GrowthbookGatewayDeserialize,
@@ -110,6 +112,15 @@ impl From<serde_json::Error> for GrowthbookError {
     fn from(error: serde_json::Error) -> Self {
         Self {
             code: GrowthbookErrorCode::ParseError,
+            message: error.to_string(),
+        }
+    }
+}
+
+impl From<OutOfRangeError> for GrowthbookError {
+    fn from(error: OutOfRangeError) -> Self {
+        Self {
+            code: GrowthbookErrorCode::DurationOutOfRangeError,
             message: error.to_string(),
         }
     }
