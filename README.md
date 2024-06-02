@@ -13,8 +13,8 @@ Initializing SDK
 
 ```rust
 let gb_url = "HTTP_OR_HTTPS_URL";
-let timeout = chrono::Duration::milliseconds(500);
-let cache_ttl = chrono::Duration::minutes(5);
+let timeout = Duration::from_millis(500);
+let cache_ttl = Duration::from_secs(300); // 5 minutes
 let gb = Growthbook::new(gb_url, timeout, cache_ttl)?;
 
 let sdk_key = "SDK_KEY"; // will be used by features

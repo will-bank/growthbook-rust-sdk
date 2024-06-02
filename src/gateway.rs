@@ -1,6 +1,7 @@
 use std::sync::Arc;
+use std::time::Duration;
 
-use chrono::{DateTime, Duration, Utc};
+use chrono::{DateTime, Utc};
 use lazy_static::lazy_static;
 use reqwest::header::USER_AGENT;
 use reqwest_middleware::ClientWithMiddleware;
@@ -28,7 +29,7 @@ struct CacheData {
 impl Default for CacheData {
     fn default() -> Self {
         CacheData {
-            ttl: Utc::now() - Duration::seconds(10),
+            ttl: Utc::now() - Duration::from_secs(10),
             data: Default::default(),
         }
     }

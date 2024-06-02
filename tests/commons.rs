@@ -1,6 +1,6 @@
-use chrono::Duration;
 use std::env;
 use std::net::{SocketAddr, TcpListener};
+use std::time::Duration;
 
 use rand::Rng;
 use test_context::AsyncTestContext;
@@ -21,8 +21,8 @@ impl AsyncTestContext for TestContext {
 
         let growthbook = Growthbook::new(
             &mock_server.uri(),
-            Duration::milliseconds(500),
-            Duration::milliseconds(100),
+            Duration::from_millis(500),
+            Duration::from_millis(100),
         )
         .expect("Failed to create growthbook gateway");
 

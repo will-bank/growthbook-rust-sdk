@@ -1,4 +1,5 @@
-use chrono::Duration;
+use std::time::Duration;
+
 use reqwest::Client;
 use reqwest_middleware::{ClientBuilder, ClientWithMiddleware, Extension};
 use reqwest_tracing::{OtelName, TracingMiddleware};
@@ -14,7 +15,7 @@ impl HttpClient {
     ) -> Result<ClientWithMiddleware, GrowthbookError> {
         let client = ClientBuilder::new(
             Client::builder()
-                .timeout(timeout_duration.to_std().map_err(GrowthbookError::from)?)
+                .timeout(timeout_duration)
                 .build()
                 .map_err(GrowthbookError::from)?,
         )

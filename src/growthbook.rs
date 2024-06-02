@@ -1,6 +1,6 @@
 use std::collections::HashMap;
+use std::time::Duration;
 
-use chrono::Duration;
 use serde_json::Value;
 use tracing::{error, info};
 
