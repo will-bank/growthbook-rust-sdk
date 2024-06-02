@@ -21,9 +21,9 @@ let sdk_key = "SDK_KEY"; // will be used later
 
 Environment variables
 
-| Env name                     | Description                               | Required | Default value |
-|------------------------------|-------------------------------------------|----------|---------------|
-| GROWTHBOOK_TIMEOUT_IN_MILLIS | Time the request will wait until it fails | No       | 1000          |
+| Env name                     | Description                                                    | Required | Default value |
+|------------------------------|----------------------------------------------------------------|----------|---------------|
+| GROWTHBOOK_TIMEOUT_IN_MILLIS | Time in milliseconds that the request will wait until it fails | No       | 1000          |
 
 
 ### Boolean feature
