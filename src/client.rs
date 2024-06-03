@@ -8,18 +8,19 @@ use std::sync::{Arc, RwLock};
 use std::time::Duration;
 use tokio::time::sleep;
 use tracing::{error, info};
+use crate::env::Environment;
 
 pub struct GrowthBookClient {
     pub gb: Arc<RwLock<Growthbook>>,
 }
 
 async fn updated_features_task(
-    gbgateway: GrowthbookGateway,
+    growthbook_gateway: GrowthbookGateway,
     config: Arc<RwLock<Growthbook>>,
     interval: Duration,
 ) {
     loop {
-        match gbgateway.get_features(None).await {
+        match growthbook_gateway.get_features(None).await {
             Ok(new_config) => {
                 let mut writable_config =
                     config.write().expect("problem to create mutex for gb data");
@@ -44,8 +45,9 @@ impl GrowthBookClient {
     pub async fn new(
         api_url: &str,
         sdk_key: &str,
-        update_interval: Duration,
+        update_interval: Option<Duration>,
     ) -> Result<Self, GrowthbookError> {
+        let default_interval = update_interval.unwrap_or(Environment::u64_or_default("GB_UPDATE_INTERVAL", 60));
         let gb_gatewway = GrowthbookGateway::new(api_url, sdk_key, None)?;
         let resp = gb_gatewway.get_features(None).await?;
         let growthbook_writable = Arc::new(RwLock::new(Growthbook {
@@ -54,7 +56,7 @@ impl GrowthBookClient {
         let gb_rw_clone = Arc::clone(&growthbook_writable);
 
         tokio::spawn(async move {
-            updated_features_task(gb_gatewway, gb_rw_clone, update_interval).await;
+            updated_features_task(gb_gatewway, gb_rw_clone, default_interval).await;
         });
 
         Ok(GrowthBookClient {

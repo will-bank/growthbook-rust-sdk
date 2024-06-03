@@ -28,7 +28,7 @@ impl GrowthbookGateway {
             ),
             client: HttpClient::create_http_client(
                 "growthbook",
-                timeout.unwrap_or(Duration::from_secs(10)),
+                timeout.unwrap_or(Environment::u64_or_default("GB_HTTP_CLIENT_TIMEOUT", 10)),
             )
             .map_err(GrowthbookError::from)?,
             sdk_key: sdk_key.to_string(),

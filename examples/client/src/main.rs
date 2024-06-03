@@ -6,7 +6,7 @@ use tokio::time::sleep;
 async fn main() {
     let api_url = "https://growthbook-proxy.owill.com.br";
     let sdk_key = "some-test-api-key";
-    let update_interval = Duration::from_secs(20); // Atualiza a cada 60 segundos
+    let update_interval = Duration::from_secs(20);
     let gb_client = GrowthBookClient::new(api_url, sdk_key, update_interval)
         .await
         .expect("cannot create gb client");
