@@ -8,7 +8,7 @@ use crate::dto::{Feature, FeatureRule};
 impl Feature {
     pub fn get_value(
         &self,
-        flag_name: &str,
+        feature_name: &str,
         user_attributes: Option<&HashMap<String, Vec<String>>>,
     ) -> (Value, Option<String>) {
         if let Some(rules) = &self.rules {
@@ -17,16 +17,16 @@ impl Feature {
                     FeatureRule::Force(it) => {
                         if let Some(value) = it.get_match_value(user_attributes) {
                             info!(
-                                "Feature {flag_name} value={} for forced rule",
+                                "Feature {feature_name} value={} for forced rule",
                                 self.default_value
                             );
                             return (value, None);
                         }
                     }
                     FeatureRule::Rollout(it) => {
-                        if let Some(value) = it.get_match_value(user_attributes) {
+                        if let Some(value) = it.get_match_value(feature_name, user_attributes) {
                             info!(
-                                "Feature {flag_name} value={} for rollout",
+                                "Feature {feature_name} value={} for rollout",
                                 self.default_value
                             );
                             return (value, None);
@@ -34,10 +34,10 @@ impl Feature {
                     }
                     FeatureRule::Experiment(it) => {
                         if let Some((value, experiment_key)) =
-                            it.get_match_value(flag_name, user_attributes)
+                            it.get_match_value(feature_name, user_attributes)
                         {
                             info!(
-                                "Feature {flag_name} value={} for experiment",
+                                "Feature {feature_name} value={} for experiment",
                                 self.default_value
                             );
                             return (value, Some(experiment_key));
@@ -47,7 +47,7 @@ impl Feature {
             }
         }
 
-        info!("Feature {flag_name} value={}", self.default_value);
+        info!("Feature {feature_name} value={}", self.default_value);
         (self.default_value.clone(), None)
     }
 }

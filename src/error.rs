@@ -36,12 +36,12 @@ impl GrowthbookError {
 
     pub fn invalid_response_value_type(flag: Flag, expected_type: &str) -> Self {
         let value = match flag {
-            Flag::BooleanFlag(it) => it.enabled.to_string(),
-            Flag::StringFlag(it) => it.value,
-            Flag::ObjectFlag(it) => it
+            Flag::Boolean(it) => it.enabled.to_string(),
+            Flag::String(it) => it.value,
+            Flag::Object(it) => it
                 .value::<String>()
                 .unwrap_or(String::from("'ObjectFlag unknown value'")),
-            Flag::InvalidFlag() => String::from("'INVALID TYPE'"),
+            Flag::Invalid() => String::from("'INVALID TYPE'"),
         };
 
         GrowthbookError {

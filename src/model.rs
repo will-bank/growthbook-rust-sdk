@@ -4,10 +4,10 @@ use serde_json::Value;
 use crate::error::GrowthbookError;
 
 pub enum Flag {
-    BooleanFlag(BooleanFlag),
-    StringFlag(StringFlag),
-    ObjectFlag(ObjectFlag),
-    InvalidFlag(),
+    Boolean(BooleanFlag),
+    String(StringFlag),
+    Object(ObjectFlag),
+    Invalid(),
 }
 
 pub trait FlagCreator {
@@ -17,13 +17,13 @@ pub trait FlagCreator {
 impl FlagCreator for Value {
     fn create_flag(&self, experiment_key: Option<String>) -> Flag {
         if self.is_boolean() {
-            Flag::BooleanFlag(BooleanFlag::new(self, experiment_key))
+            Flag::Boolean(BooleanFlag::new(self, experiment_key))
         } else if self.is_string() {
-            Flag::StringFlag(StringFlag::new(self, experiment_key))
+            Flag::String(StringFlag::new(self, experiment_key))
         } else if self.is_object() {
-            Flag::ObjectFlag(ObjectFlag::new(self, experiment_key))
+            Flag::Object(ObjectFlag::new(self, experiment_key))
         } else {
-            Flag::InvalidFlag()
+            Flag::Invalid()
         }
     }
 }

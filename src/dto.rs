@@ -60,10 +60,28 @@ pub struct FeatureRuleRollout {
     pub hash_attribute: String,
 }
 
+pub struct FeatureRuleExperimentRange {
+    pub start: f32,
+    pub end: f32,
+}
+
+impl FeatureRuleExperimentRange {
+    fn new(start: f32, end: f32) -> Self {
+        Self { start, end }
+    }
+
+    pub fn in_range(&self, value: &f32) -> bool {
+        value >= &self.start && value <= &self.end
+    }
+}
+
 #[derive(Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct FeatureRuleExperiment {
-    pub coverage: f32,
+    key: Option<String>,
+    pub coverage: Option<f32>,
+    seed: Option<String>,
+    pub hash_version: Option<i64>,
     pub hash_attribute: String,
     pub variations: Vec<Value>,
     weights: Vec<f32>,
@@ -71,15 +89,55 @@ pub struct FeatureRuleExperiment {
 }
 
 impl FeatureRuleExperiment {
-    pub fn weights(&self) -> Vec<f32> {
+    pub fn seed(&self) -> String {
+        self.seed
+            .clone()
+            .unwrap_or(self.key.clone().unwrap_or(String::from("default")))
+    }
+
+    pub fn weights(&self) -> Vec<FeatureRuleExperimentRange> {
+        let clamped_coverage = self.clamped_coverage();
+        let adjusted_weights = self.adjusted_weights();
+
         let mut acc = 0.0;
-        self.weights
+        adjusted_weights
             .iter()
             .map(|weight| {
+                let start = acc;
                 acc += weight;
-                acc
+                let end = start + clamped_coverage * weight;
+                FeatureRuleExperimentRange::new(start, end)
             })
             .collect()
+    }
+
+    fn adjusted_weights(&self) -> Vec<f32> {
+        let weights_sum: f32 = self.weights.iter().sum();
+        if !(0.99..=1.01).contains(&weights_sum) {
+            let weight = 1.0 / self.weights.len() as f32;
+            let mut vec = vec![];
+            for _ in 0..self.weights.len() {
+                vec.push(weight);
+            }
+            vec
+        } else {
+            self.weights.clone()
+        }
+    }
+
+    fn clamped_coverage(&self) -> f32 {
+        match self.coverage {
+            None => 1.0,
+            Some(value) => {
+                if value > 1.0 {
+                    1.0
+                } else if value < 0.0 {
+                    0.0
+                } else {
+                    value
+                }
+            }
+        }
     }
 }
 

@@ -1,0 +1,8 @@
+[package]
+name = "client-full-example"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+growthbook-rust-sdk = { path = "../.."}
+tokio = { version = "1.38.0", features = ["full"] }
