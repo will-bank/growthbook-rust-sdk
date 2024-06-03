@@ -49,7 +49,7 @@ mod test {
             vec![String::from("1"), String::from("2"), String::from("3")],
         )]);
 
-        let flag_state = ctx.growthbook.is_on("elem-match-eq", true, Some(&map))?;
+        let flag_state = ctx.growthbook.is_on("elem-match-eq", false, Some(&map))?;
 
         assert!(flag_state.enabled);
 
@@ -64,7 +64,7 @@ mod test {
     ) -> Result<(), Box<dyn std::error::Error>> {
         let map = HashMap::from([(String::from("any-data"), vec![String::from("3")])]);
 
-        let flag_state = ctx.growthbook.is_on("elem-match-eq", true, Some(&map))?;
+        let flag_state = ctx.growthbook.is_on("elem-match-eq", false, Some(&map))?;
 
         assert!(flag_state.enabled);
 

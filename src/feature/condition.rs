@@ -1,78 +1,179 @@
-use std::collections::HashMap;
-
-use crate::dto::FeatureRuleCondition;
 use crate::extensions::{ConvertToUsize, FoldVecString};
+use regex::Regex;
+use serde_json::Value;
+use std::collections::HashMap;
 
 pub trait ConditionEnabledCheck {
     fn is_on(&self, user_attributes: Option<&HashMap<String, Vec<String>>>) -> bool;
 }
 
-impl ConditionEnabledCheck for HashMap<String, FeatureRuleCondition> {
+impl ConditionEnabledCheck for HashMap<String, Value> {
     fn is_on(&self, user_attributes: Option<&HashMap<String, Vec<String>>>) -> bool {
-        if let Some(user_map) = user_attributes {
-            self.iter().all(|(key, value)| {
-                if let Some(user_attribute) = user_map.get(key) {
-                    value.matches(user_attribute)
-                } else {
-                    false
-                }
-            })
+        if let Some(attributes) = user_attributes {
+            evaluate(self, None, attributes)
         } else {
             false
         }
     }
 }
 
-impl FeatureRuleCondition {
-    fn matches(&self, user_attribute_value: &Vec<String>) -> bool {
-        match self {
-            FeatureRuleCondition::String(it) => it == &user_attribute_value.fold_to_string(),
-            FeatureRuleCondition::Gte(it) => usize_matcher(
-                user_attribute_value.fold_to_string(),
-                it.gte.clone(),
-                |user_attribute_value, gte_value| user_attribute_value >= gte_value,
-            ),
-            FeatureRuleCondition::Gt(it) => usize_matcher(
-                user_attribute_value.fold_to_string(),
-                it.gt.clone(),
-                |user_attribute_value, gte_value| user_attribute_value > gte_value,
-            ),
-            FeatureRuleCondition::Lte(it) => usize_matcher(
-                user_attribute_value.fold_to_string(),
-                it.lte.clone(),
-                |user_attribute_value, gte_value| user_attribute_value <= gte_value,
-            ),
-            FeatureRuleCondition::Lt(it) => usize_matcher(
-                user_attribute_value.fold_to_string(),
-                it.lt.clone(),
-                |user_attribute_value, gte_value| user_attribute_value < gte_value,
-            ),
-            FeatureRuleCondition::ElemMatchEq(it) => {
-                user_attribute_value.contains(&it.elem_match.eq)
+fn evaluate(
+    map: &HashMap<String, Value>,
+    parent_key: Option<String>,
+    attributes: &HashMap<String, Vec<String>>,
+) -> bool {
+    map.iter()
+        .all(|(key, value)| is_on(parent_key.clone(), key, value, attributes))
+}
+
+fn is_on(
+    parent_key: Option<String>,
+    key: &str,
+    value: &Value,
+    user_attributes: &HashMap<String, Vec<String>>,
+) -> bool {
+    match key {
+        "$not" => {
+            let next_elem = value_struct_to_hash_map(value);
+            !evaluate(
+                &next_elem,
+                Some(parent_key.unwrap_or(key.to_string())),
+                user_attributes,
+            )
+        }
+        "$gt" => evaluate_usize(
+            parent_key,
+            key,
+            value,
+            user_attributes,
+            |feature_attribute, user_attribute| feature_attribute < user_attribute,
+        ),
+        "$gte" => evaluate_usize(
+            parent_key,
+            key,
+            value,
+            user_attributes,
+            |feature_attribute, user_attribute| feature_attribute <= user_attribute,
+        ),
+        "$lt" => evaluate_usize(
+            parent_key,
+            key,
+            value,
+            user_attributes,
+            |feature_attribute, user_attribute| feature_attribute > user_attribute,
+        ),
+        "$lte" => evaluate_usize(
+            parent_key,
+            key,
+            value,
+            user_attributes,
+            |feature_attribute, user_attribute| feature_attribute >= user_attribute,
+        ),
+        "$eq" => evaluate_string(
+            parent_key,
+            key,
+            value,
+            user_attributes,
+            |feature_attribute, user_attribute| feature_attribute == user_attribute,
+        ),
+        "$regex" => evaluate_string(
+            parent_key,
+            key,
+            value,
+            user_attributes,
+            |feature_attribute, user_attribute| {
+                if let Ok(regex) = Regex::new(feature_attribute) {
+                    regex.is_match(user_attribute)
+                } else {
+                    false
+                }
+            },
+        ),
+        "$elemMatch" => {
+            let next_elem = value_struct_to_hash_map(value);
+            let attribute_key = parent_key.clone().unwrap_or(key.to_string());
+            if let Some(user_attribute_values) = user_attributes.get(&attribute_key.clone()) {
+                user_attribute_values.iter().any(|value| {
+                    let user_attribute_elem =
+                        HashMap::from([(attribute_key.clone(), vec![value.clone()])]);
+                    evaluate(
+                        &next_elem,
+                        Some(attribute_key.clone()),
+                        &user_attribute_elem,
+                    )
+                })
+            } else {
+                false
             }
-            FeatureRuleCondition::NotElemMatchEq(it) => {
-                !user_attribute_value.contains(&it.not.elem_match.eq)
-            }
-            FeatureRuleCondition::Eq(it) => it.eq == user_attribute_value.fold_to_string(),
-            FeatureRuleCondition::In(it) => {
-                it.array.contains(&user_attribute_value.fold_to_string())
+        }
+        &_ => {
+            if value.is_object() {
+                let next_elem = value_struct_to_hash_map(value);
+                evaluate(
+                    &next_elem,
+                    Some(parent_key.unwrap_or(key.to_string())),
+                    user_attributes,
+                )
+            } else {
+                evaluate_string(
+                    parent_key,
+                    key,
+                    value,
+                    user_attributes,
+                    |feature_attribute, user_attribute| feature_attribute == user_attribute,
+                )
             }
         }
     }
 }
 
-fn usize_matcher(
-    user_attribute_result: String,
-    rule_result: String,
+fn evaluate_usize(
+    parent_key: Option<String>,
+    key: &str,
+    value: &Value,
+    user_attributes: &HashMap<String, Vec<String>>,
     evaluate: fn(usize, usize) -> bool,
 ) -> bool {
-    if let Ok(user_attribute_value) = user_attribute_result.convert_to_usize() {
-        if let Ok(rule_value) = rule_result.convert_to_usize() {
-            evaluate(user_attribute_value, rule_value)
+    let attribute_key = &parent_key.clone().unwrap_or(String::from(key));
+    if let Some(attribute) = user_attributes.get(attribute_key) {
+        if let Ok(feature_attribute) = value.convert_to_usize() {
+            if let Ok(user_attribute) = attribute.fold_to_string().convert_to_usize() {
+                evaluate(feature_attribute, user_attribute)
+            } else {
+                false
+            }
         } else {
             false
         }
     } else {
         false
     }
+}
+
+fn evaluate_string(
+    parent_key: Option<String>,
+    key: &str,
+    value: &Value,
+    user_attributes: &HashMap<String, Vec<String>>,
+    evaluate: fn(&str, &str) -> bool,
+) -> bool {
+    let attribute_key = &parent_key.unwrap_or(String::from(key));
+    if let Some(attribute) = user_attributes.get(attribute_key) {
+        if let Some(feature_attribute) = value.as_str() {
+            evaluate(feature_attribute, &attribute.fold_to_string())
+        } else {
+            false
+        }
+    } else {
+        false
+    }
+}
+
+fn value_struct_to_hash_map(value: &Value) -> HashMap<String, Value> {
+    let map = value.as_object().expect("");
+    let mut hash_map = HashMap::new();
+    for (key, value) in map {
+        hash_map.insert(key.clone(), value.clone());
+    }
+    hash_map
 }

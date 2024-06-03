@@ -345,6 +345,7 @@ dependencies = [
  "fnv",
  "lazy_static",
  "rand",
+ "regex",
  "reqwest",
  "reqwest-middleware",
  "reqwest-tracing",

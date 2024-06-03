@@ -31,24 +31,10 @@ pub enum FeatureRule {
 }
 
 #[derive(Deserialize, Clone)]
-#[serde(untagged)]
-pub enum FeatureRuleCondition {
-    String(String),
-    Gte(FeatureRuleConditionGte),
-    Gt(FeatureRuleConditionGt),
-    Lte(FeatureRuleConditionLte),
-    Lt(FeatureRuleConditionLt),
-    ElemMatchEq(FeatureRuleConditionElemMatchEq),
-    NotElemMatchEq(FeatureRuleConditionNotElemMatchEq),
-    Eq(FeatureRuleConditionEq),
-    In(FeatureRuleConditionIn),
-}
-
-#[derive(Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct FeatureRuleForce {
     pub force: Value,
-    pub condition: Option<HashMap<String, FeatureRuleCondition>>,
+    pub condition: Option<HashMap<String, Value>>,
 }
 
 #[derive(Deserialize, Clone)]
@@ -56,7 +42,7 @@ pub struct FeatureRuleForce {
 pub struct FeatureRuleRollout {
     pub force: Value,
     pub coverage: f32,
-    pub condition: Option<HashMap<String, FeatureRuleCondition>>,
+    pub condition: Option<HashMap<String, Value>>,
     pub hash_attribute: String,
 }
 
@@ -139,60 +125,4 @@ impl FeatureRuleExperiment {
             }
         }
     }
-}
-
-#[derive(Deserialize, Clone)]
-#[serde(rename_all = "camelCase")]
-pub struct FeatureRuleConditionGte {
-    #[serde(alias = "$gte")]
-    pub gte: String,
-}
-
-#[derive(Deserialize, Clone)]
-#[serde(rename_all = "camelCase")]
-pub struct FeatureRuleConditionGt {
-    #[serde(alias = "$gt")]
-    pub gt: String,
-}
-
-#[derive(Deserialize, Clone)]
-#[serde(rename_all = "camelCase")]
-pub struct FeatureRuleConditionLte {
-    #[serde(alias = "$lte")]
-    pub lte: String,
-}
-
-#[derive(Deserialize, Clone)]
-#[serde(rename_all = "camelCase")]
-pub struct FeatureRuleConditionLt {
-    #[serde(alias = "$lt")]
-    pub lt: String,
-}
-
-#[derive(Deserialize, Clone)]
-#[serde(rename_all = "camelCase")]
-pub struct FeatureRuleConditionElemMatchEq {
-    #[serde(alias = "$elemMatch")]
-    pub elem_match: FeatureRuleConditionEq,
-}
-
-#[derive(Deserialize, Clone)]
-#[serde(rename_all = "camelCase")]
-pub struct FeatureRuleConditionNotElemMatchEq {
-    #[serde(alias = "$not")]
-    pub not: FeatureRuleConditionElemMatchEq,
-}
-
-#[derive(Deserialize, Clone)]
-#[serde(rename_all = "camelCase")]
-pub struct FeatureRuleConditionEq {
-    #[serde(alias = "$eq")]
-    pub eq: String,
-}
-
-#[derive(Deserialize, Clone)]
-#[serde(rename_all = "camelCase")]
-pub struct FeatureRuleConditionIn {
-    #[serde(alias = "$in")]
-    pub array: Vec<String>,
 }

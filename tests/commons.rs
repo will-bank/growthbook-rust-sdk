@@ -143,6 +143,19 @@ pub async fn all_cases(mock_server: &MockServer, sdk: Uuid) {
                     }
                 ]
             },
+            "regex-rule": {
+                "defaultValue": false,
+                "rules": [
+                    {
+                        "condition": {
+                            "version": {
+                                "$regex": "^[3-9]\\d*(\\.\\d+)*$"
+                            }
+                        },
+                        "force": true,
+                    }
+                ]
+            },
             "experiment-rule-condition-flag": {
                 "defaultValue": false,
                 "rules": [

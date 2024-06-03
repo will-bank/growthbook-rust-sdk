@@ -98,7 +98,7 @@ mod test {
             ),
         ]);
 
-        let flag_state = ctx.growthbook.is_on("flag", true, Some(&map))?;
+        let flag_state = ctx.growthbook.is_on("flag", false, Some(&map))?;
 
         assert!(flag_state.enabled);
 
