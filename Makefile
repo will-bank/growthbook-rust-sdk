@@ -6,6 +6,3 @@ clippy:
 
 test:
 	@cargo watch -q -c -x 'nextest run ${FILTER} --no-capture'
-
-run:
-	cargo watch -q -c -x 'run --bin main'
