@@ -13,7 +13,7 @@ mod test {
     async fn should_return_enabled_default_when_fail_to_call_growthbook(
         ctx: &mut TestContext,
     ) -> Result<(), Box<dyn std::error::Error>> {
-        let flag_state = ctx.growthbook.is_on("not-exist-flag", false, None).await?;
+        let flag_state = ctx.growthbook.is_on("not-exist-flag", false, None)?;
 
         assert!(!flag_state.enabled);
 
@@ -26,10 +26,7 @@ mod test {
     async fn should_return_enabled_false_flag_id_is_disabled(
         ctx: &mut TestContext,
     ) -> Result<(), Box<dyn std::error::Error>> {
-        let flag_state = ctx
-            .growthbook
-            .is_on("simple-flag-disabled", true, None)
-            .await?;
+        let flag_state = ctx.growthbook.is_on("simple-flag-disabled", true, None)?;
 
         assert!(!flag_state.enabled);
 
@@ -42,7 +39,7 @@ mod test {
     async fn should_return_enabled_true_flag_id_is_enabled(
         ctx: &mut TestContext,
     ) -> Result<(), Box<dyn std::error::Error>> {
-        let flag_state = ctx.growthbook.is_on("simple-flag", false, None).await?;
+        let flag_state = ctx.growthbook.is_on("simple-flag", false, None)?;
 
         assert!(flag_state.enabled);
 
@@ -62,8 +59,7 @@ mod test {
 
         let flag_state = ctx
             .growthbook
-            .is_on("simple-rule-conditio", true, Some(&map))
-            .await?;
+            .is_on("simple-rule-conditio", true, Some(&map))?;
 
         assert!(!flag_state.enabled);
 
@@ -83,8 +79,7 @@ mod test {
 
         let flag_state = ctx
             .growthbook
-            .is_on("simple-rule-conditio", true, Some(&map))
-            .await?;
+            .is_on("simple-rule-conditio", true, Some(&map))?;
 
         assert!(flag_state.enabled);
 
@@ -104,8 +99,7 @@ mod test {
 
         let flag_state = ctx
             .growthbook
-            .is_on("simple-rule-conditio", true, Some(&map))
-            .await?;
+            .is_on("simple-rule-conditio", true, Some(&map))?;
 
         assert!(!flag_state.enabled);
 

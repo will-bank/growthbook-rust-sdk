@@ -17,17 +17,14 @@ mod test {
     async fn should_return_enabled_default_when_fail_to_call_growthbook(
         ctx: &mut TestContext,
     ) -> Result<(), Box<dyn std::error::Error>> {
-        let object_flag = ctx
-            .growthbook
-            .get_object_value(
-                "flag-not-exists",
-                &json!({
-                    "a":"string",
-                    "b":"int",
-                }),
-                None,
-            )
-            .await?;
+        let object_flag = ctx.growthbook.get_object_value(
+            "flag-not-exists",
+            &json!({
+                "a":"string",
+                "b":"int",
+            }),
+            None,
+        )?;
 
         let value: ObjectValue = object_flag.value()?;
 
@@ -43,8 +40,7 @@ mod test {
     async fn should_return_value(ctx: &mut TestContext) -> Result<(), Box<dyn std::error::Error>> {
         let object_flag = ctx
             .growthbook
-            .get_object_value("object-flag", &json!({}), None)
-            .await?;
+            .get_object_value("object-flag", &json!({}), None)?;
 
         let value: ObjectValue = object_flag.value()?;
 

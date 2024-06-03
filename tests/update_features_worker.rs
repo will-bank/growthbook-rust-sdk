@@ -65,12 +65,12 @@ mod test {
         )
         .await?;
 
-        let first_result = client.is_on("new_feature", false, None).await?;
+        let first_result = client.is_on("new_feature", false, None)?;
         assert!(!first_result.enabled);
 
         tokio::time::sleep(Duration::from_secs(2)).await;
 
-        let result = client.is_on("another_feature", false, None).await?;
+        let result = client.is_on("another_feature", false, None)?;
         assert!(result.enabled);
         Ok(())
     }

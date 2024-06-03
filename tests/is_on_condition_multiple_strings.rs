@@ -14,7 +14,7 @@ mod test {
     async fn should_return_enabled_default_when_fail_to_call_growthbook(
         ctx: &mut TestContext,
     ) -> Result<(), Box<dyn std::error::Error>> {
-        let flag_state = ctx.growthbook.is_on("flag-not-found", true, None).await?;
+        let flag_state = ctx.growthbook.is_on("flag-not-found", true, None)?;
 
         assert!(flag_state.enabled);
 
@@ -32,7 +32,7 @@ mod test {
             (String::from("any-key"), vec![Uuid::now_v7().to_string()]),
         ]);
 
-        let flag_state = ctx.growthbook.is_on("flag", true, Some(&map)).await?;
+        let flag_state = ctx.growthbook.is_on("flag", true, Some(&map))?;
 
         assert!(!flag_state.enabled);
 
@@ -53,7 +53,7 @@ mod test {
             (String::from("any-key"), vec![Uuid::now_v7().to_string()]),
         ]);
 
-        let flag_state = ctx.growthbook.is_on("flag", true, Some(&map)).await?;
+        let flag_state = ctx.growthbook.is_on("flag", true, Some(&map))?;
 
         assert!(!flag_state.enabled);
 
@@ -74,7 +74,7 @@ mod test {
             ),
         ]);
 
-        let flag_state = ctx.growthbook.is_on("flag", true, Some(&map)).await?;
+        let flag_state = ctx.growthbook.is_on("flag", true, Some(&map))?;
 
         assert!(!flag_state.enabled);
 
@@ -98,7 +98,7 @@ mod test {
             ),
         ]);
 
-        let flag_state = ctx.growthbook.is_on("flag", true, Some(&map)).await?;
+        let flag_state = ctx.growthbook.is_on("flag", true, Some(&map))?;
 
         assert!(flag_state.enabled);
 

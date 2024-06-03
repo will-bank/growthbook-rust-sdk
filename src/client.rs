@@ -72,16 +72,15 @@ impl GrowthBookClient {
         })
     }
 
-    pub async fn is_on(
+    pub fn is_on(
         &self,
         feature_name: &str,
         default_response: bool,
         user_attributes: Option<&HashMap<String, Vec<String>>>,
     ) -> Result<BooleanFlag, GrowthbookError> {
-        let flag = self
-            .read_gb()
-            .check(feature_name, Value::Bool(default_response), user_attributes)
-            .await;
+        let flag =
+            self.read_gb()
+                .check(feature_name, Value::Bool(default_response), user_attributes);
 
         match flag {
             Flag::Boolean(it) => Ok(it),
@@ -89,20 +88,17 @@ impl GrowthBookClient {
         }
     }
 
-    pub async fn get_string_value(
+    pub fn get_string_value(
         &self,
         feature_name: &str,
         default_response: &str,
         user_attributes: Option<&HashMap<String, Vec<String>>>,
     ) -> Result<StringFlag, GrowthbookError> {
-        let flag = self
-            .read_gb()
-            .check(
-                feature_name,
-                Value::String(String::from(default_response)),
-                user_attributes,
-            )
-            .await;
+        let flag = self.read_gb().check(
+            feature_name,
+            Value::String(String::from(default_response)),
+            user_attributes,
+        );
 
         match flag {
             Flag::String(it) => Ok(it),
@@ -110,7 +106,7 @@ impl GrowthBookClient {
         }
     }
 
-    pub async fn get_object_value(
+    pub fn get_object_value(
         &self,
         feature_name: &str,
         default_response: &Value,
@@ -118,8 +114,7 @@ impl GrowthBookClient {
     ) -> Result<ObjectFlag, GrowthbookError> {
         let flag = self
             .read_gb()
-            .check(feature_name, default_response.clone(), user_attributes)
-            .await;
+            .check(feature_name, default_response.clone(), user_attributes);
 
         match flag {
             Flag::Object(it) => Ok(it),
@@ -127,10 +122,11 @@ impl GrowthBookClient {
         }
     }
 
-    pub async fn total_features(&self) -> usize {
+    pub fn total_features(&self) -> usize {
         let gb_data = self.read_gb();
         gb_data.features.len()
     }
+
     fn read_gb(&self) -> Growthbook {
         match self.gb.read() {
             Ok(rw_read_guard) => (*rw_read_guard).clone(),

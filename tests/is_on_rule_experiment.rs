@@ -13,7 +13,7 @@ mod test {
     async fn should_return_enabled_default_when_fail_to_call_growthbook(
         ctx: &mut TestContext,
     ) -> Result<(), Box<dyn std::error::Error>> {
-        let flag_state = ctx.growthbook.is_on("flag-not-exist", false, None).await?;
+        let flag_state = ctx.growthbook.is_on("flag-not-exist", false, None)?;
 
         assert!(!flag_state.enabled);
         assert!(flag_state.experiment_key.is_none());
@@ -32,10 +32,9 @@ mod test {
             vec![String::from("018fde79-e663-79d9-83f5-00d300c3c31e")],
         )]);
 
-        let flag_state = ctx
-            .growthbook
-            .is_on("experiment-rule-condition-flag", true, Some(&map))
-            .await?;
+        let flag_state =
+            ctx.growthbook
+                .is_on("experiment-rule-condition-flag", true, Some(&map))?;
 
         assert!(!flag_state.enabled);
         assert_eq!(
@@ -57,14 +56,11 @@ mod test {
             vec![String::from("018fde79-4e7d-713a-bc1b-92a64729bd47")],
         )]);
 
-        let flag_state = ctx
-            .growthbook
-            .is_on(
-                "experiment-rule-condition-ninety-coverage-flag",
-                true,
-                Some(&map),
-            )
-            .await?;
+        let flag_state = ctx.growthbook.is_on(
+            "experiment-rule-condition-ninety-coverage-flag",
+            true,
+            Some(&map),
+        )?;
 
         assert!(flag_state.enabled);
         assert_eq!(
@@ -86,14 +82,11 @@ mod test {
             vec![String::from("018fd040-de77-72c7-af6e-6a67d430c0e6")],
         )]);
 
-        let flag_state = ctx
-            .growthbook
-            .is_on(
-                "experiment-rule-condition-zero-coverage-flag",
-                true,
-                Some(&map),
-            )
-            .await?;
+        let flag_state = ctx.growthbook.is_on(
+            "experiment-rule-condition-zero-coverage-flag",
+            true,
+            Some(&map),
+        )?;
 
         assert!(!flag_state.enabled);
         assert!(flag_state.experiment_key.is_none());

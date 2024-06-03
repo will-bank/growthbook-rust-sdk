@@ -13,10 +13,7 @@ mod test {
     async fn should_return_enabled_default_when_fail_to_call_growthbook(
         ctx: &mut TestContext,
     ) -> Result<(), Box<dyn std::error::Error>> {
-        let flag_state = ctx
-            .growthbook
-            .is_on("lte-flag-not-exist", true, None)
-            .await?;
+        let flag_state = ctx.growthbook.is_on("lte-flag-not-exist", true, None)?;
 
         assert!(flag_state.enabled);
 
@@ -31,7 +28,7 @@ mod test {
     ) -> Result<(), Box<dyn std::error::Error>> {
         let map = HashMap::from([(String::from("version"), vec![String::from("1.2.3")])]);
 
-        let flag_state = ctx.growthbook.is_on("lte-flag", true, Some(&map)).await?;
+        let flag_state = ctx.growthbook.is_on("lte-flag", true, Some(&map))?;
 
         assert!(flag_state.enabled);
 
@@ -46,7 +43,7 @@ mod test {
     ) -> Result<(), Box<dyn std::error::Error>> {
         let map = HashMap::from([(String::from("version"), vec![String::from("1.2.2")])]);
 
-        let flag_state = ctx.growthbook.is_on("lte-flag", true, Some(&map)).await?;
+        let flag_state = ctx.growthbook.is_on("lte-flag", true, Some(&map))?;
 
         assert!(flag_state.enabled);
 
@@ -61,7 +58,7 @@ mod test {
     ) -> Result<(), Box<dyn std::error::Error>> {
         let map = HashMap::from([(String::from("version"), vec![String::from("1.2.4")])]);
 
-        let flag_state = ctx.growthbook.is_on("lte-flag", true, Some(&map)).await?;
+        let flag_state = ctx.growthbook.is_on("lte-flag", true, Some(&map))?;
 
         assert!(!flag_state.enabled);
 
@@ -76,7 +73,7 @@ mod test {
     ) -> Result<(), Box<dyn std::error::Error>> {
         let map = HashMap::from([(String::from("any"), vec![String::from("1.2.4")])]);
 
-        let flag_state = ctx.growthbook.is_on("lte-flag", true, Some(&map)).await?;
+        let flag_state = ctx.growthbook.is_on("lte-flag", true, Some(&map))?;
 
         assert!(!flag_state.enabled);
 

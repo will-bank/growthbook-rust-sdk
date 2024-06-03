@@ -11,7 +11,7 @@ pub struct Growthbook {
 }
 
 impl Growthbook {
-    pub async fn check(
+    pub fn check(
         &self,
         flag_name: &str,
         default_response: Value,

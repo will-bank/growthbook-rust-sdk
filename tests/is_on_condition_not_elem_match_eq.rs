@@ -14,7 +14,7 @@ mod test {
     async fn should_return_enabled_default_when_fail_to_call_growthbook(
         ctx: &mut TestContext,
     ) -> Result<(), Box<dyn std::error::Error>> {
-        let flag_state = ctx.growthbook.is_on("flag-not-exist", true, None).await?;
+        let flag_state = ctx.growthbook.is_on("flag-not-exist", true, None)?;
 
         assert!(flag_state.enabled);
 
@@ -34,8 +34,7 @@ mod test {
 
         let flag_state = ctx
             .growthbook
-            .is_on("not-elem-match-eq", true, Some(&map))
-            .await?;
+            .is_on("not-elem-match-eq", true, Some(&map))?;
 
         assert!(flag_state.enabled);
 
@@ -55,8 +54,7 @@ mod test {
 
         let flag_state = ctx
             .growthbook
-            .is_on("not-elem-match-eq", true, Some(&map))
-            .await?;
+            .is_on("not-elem-match-eq", true, Some(&map))?;
 
         assert!(!flag_state.enabled);
 
@@ -73,8 +71,7 @@ mod test {
 
         let flag_state = ctx
             .growthbook
-            .is_on("not-elem-match-eq", true, Some(&map))
-            .await?;
+            .is_on("not-elem-match-eq", true, Some(&map))?;
 
         assert!(!flag_state.enabled);
 
@@ -91,8 +88,7 @@ mod test {
 
         let flag_state = ctx
             .growthbook
-            .is_on("not-elem-match-eq", true, Some(&map))
-            .await?;
+            .is_on("not-elem-match-eq", true, Some(&map))?;
 
         assert!(!flag_state.enabled);
 
