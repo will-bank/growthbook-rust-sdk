@@ -1,7 +1,7 @@
 pub mod client;
 pub mod dto;
 mod env;
-mod error;
+pub mod error;
 mod extensions;
 mod feature;
 mod gateway;
