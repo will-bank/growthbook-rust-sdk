@@ -22,7 +22,7 @@ let gb = GrowthBookClient::new(gb_url, sdk_key, None, None)?;
 
 The lib is configurable via environment variables as following:
 
-| env var                | Required | description                                                                    |
+| env var                | required | description                                                                    |
 |------------------------|----------|--------------------------------------------------------------------------------|
 | GB_HTTP_CLIENT_TIMEOUT | false    | Timeout from gb client to wait a response from gb server. Default value is 10s |
 | GB_UPDATE_INTERVAL     | false    | Interval to fetch features data from gb server. Default value is 60s           |
