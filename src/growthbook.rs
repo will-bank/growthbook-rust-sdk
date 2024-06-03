@@ -3,25 +3,17 @@ use std::time::Duration;
 
 use serde_json::Value;
 use tracing::{error, info};
+use crate::dto::Feature;
 
 use crate::error::GrowthbookError;
 use crate::gateway::GrowthbookGateway;
 use crate::model::{BooleanFlag, Flag, FlagCreator, ObjectFlag, StringFlag};
 
 pub struct Growthbook {
-    gateway: GrowthbookGateway,
+    pub features: HashMap<String, Feature>,
 }
 
 impl Growthbook {
-    pub fn new(
-        url: &str,
-        timeout_duration: Duration,
-        cache_duration: Duration,
-    ) -> Result<Self, GrowthbookError> {
-        Ok(Self {
-            gateway: GrowthbookGateway::new(url, timeout_duration, cache_duration)?,
-        })
-    }
 
     pub async fn is_on(
         &self,

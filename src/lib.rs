@@ -1,4 +1,4 @@
-mod dto;
+pub mod dto;
 mod env;
 mod error;
 mod extensions;
@@ -8,3 +8,4 @@ pub mod growthbook;
 mod hash;
 mod infra;
 pub mod model;
+pub mod nb_gateway;
