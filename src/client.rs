@@ -10,6 +10,7 @@ use std::time::Duration;
 use tokio::time::sleep;
 use tracing::{error, info};
 
+#[derive(Clone)]
 pub struct GrowthBookClient {
     pub gb: Arc<RwLock<Growthbook>>,
 }
