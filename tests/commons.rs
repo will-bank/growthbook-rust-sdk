@@ -1,6 +1,4 @@
-use std::env;
 use std::net::{SocketAddr, TcpListener};
-use std::time::Duration;
 
 use rand::Rng;
 use reqwest::StatusCode;
@@ -19,19 +17,15 @@ pub struct TestContext {
 
 impl AsyncTestContext for TestContext {
     async fn setup() -> TestContext {
-        env::set_var("is-test-environment", "true");
         let mock_server = create_mock_server().await;
         let gb_sdk = Uuid::now_v7();
 
         all_cases(&mock_server, gb_sdk).await;
 
-        let growthbook = GrowthBookClient::new(
-            &mock_server.uri(),
-            gb_sdk.to_string().as_str(),
-            Duration::from_secs(30),
-        )
-        .await
-        .expect("Failed to create growthbook gateway");
+        let growthbook =
+            GrowthBookClient::new(&mock_server.uri(), gb_sdk.to_string().as_str(), None, None)
+                .await
+                .expect("Failed to create growthbook gateway");
 
         TestContext {
             mock_server,

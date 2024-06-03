@@ -6,3 +6,6 @@ clippy:
 
 test:
 	@cargo watch -q -c -x 'nextest run ${FILTER} --no-capture'
+
+test_oneshot:
+	cargo nextest run

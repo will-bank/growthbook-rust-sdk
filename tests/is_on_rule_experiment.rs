@@ -29,7 +29,7 @@ mod test {
     ) -> Result<(), Box<dyn std::error::Error>> {
         let map = HashMap::from([(
             String::from("any-id"),
-            vec![String::from("018fdc6a-d694-73c4-8445-68b24bfb0f73")],
+            vec![String::from("018fde79-e663-79d9-83f5-00d300c3c31e")],
         )]);
 
         let flag_state = ctx
@@ -54,7 +54,7 @@ mod test {
     ) -> Result<(), Box<dyn std::error::Error>> {
         let map = HashMap::from([(
             String::from("any-id"),
-            vec![String::from("018fcf36-d39b-705c-a800-dc8bdc5964be")],
+            vec![String::from("018fde79-4e7d-713a-bc1b-92a64729bd47")],
         )]);
 
         let flag_state = ctx

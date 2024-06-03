@@ -14,11 +14,7 @@ pub struct GrowthbookGateway {
     pub client: ClientWithMiddleware,
 }
 impl GrowthbookGateway {
-    pub fn new(
-        url: &str,
-        sdk_key: &str,
-        timeout: Option<Duration>,
-    ) -> Result<Self, GrowthbookError> {
+    pub fn new(url: &str, sdk_key: &str, timeout: Duration) -> Result<Self, GrowthbookError> {
         Ok(Self {
             url: String::from(url),
             user_agent: format!(
@@ -26,11 +22,8 @@ impl GrowthbookGateway {
                 Environment::string_or_default("CARGO_PKG_NAME", "growthbook-rust-sdk"),
                 Environment::string_or_default("CARGO_PKG_VERSION", "1.0.0")
             ),
-            client: HttpClient::create_http_client(
-                "growthbook",
-                timeout.unwrap_or(Environment::u64_or_default("GB_HTTP_CLIENT_TIMEOUT", 10)),
-            )
-            .map_err(GrowthbookError::from)?,
+            client: HttpClient::create_http_client("growthbook", timeout)
+                .map_err(GrowthbookError::from)?,
             sdk_key: sdk_key.to_string(),
         })
     }

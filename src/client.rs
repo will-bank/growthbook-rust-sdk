@@ -1,3 +1,4 @@
+use crate::env::Environment;
 use crate::error::GrowthbookError;
 use crate::gateway::GrowthbookGateway;
 use crate::growthbook::Growthbook;
@@ -8,7 +9,6 @@ use std::sync::{Arc, RwLock};
 use std::time::Duration;
 use tokio::time::sleep;
 use tracing::{error, info};
-use crate::env::Environment;
 
 pub struct GrowthBookClient {
     pub gb: Arc<RwLock<Growthbook>>,
@@ -46,17 +46,25 @@ impl GrowthBookClient {
         api_url: &str,
         sdk_key: &str,
         update_interval: Option<Duration>,
+        http_timeout: Option<Duration>,
     ) -> Result<Self, GrowthbookError> {
-        let default_interval = update_interval.unwrap_or(Environment::u64_or_default("GB_UPDATE_INTERVAL", 60));
-        let gb_gatewway = GrowthbookGateway::new(api_url, sdk_key, None)?;
-        let resp = gb_gatewway.get_features(None).await?;
+        let default_interval = update_interval.unwrap_or_else(|| {
+            let seconds = Environment::u64_or_default("GB_UPDATE_INTERVAL", 60);
+            Duration::from_secs(seconds)
+        });
+        let default_timeout = http_timeout.unwrap_or_else(|| {
+            let seconds = Environment::u64_or_default("GB_HTTP_CLIENT_TIMEOUT", 10);
+            Duration::from_secs(seconds)
+        });
+        let gb_gateway = GrowthbookGateway::new(api_url, sdk_key, default_timeout)?;
+        let resp = gb_gateway.get_features(None).await?;
         let growthbook_writable = Arc::new(RwLock::new(Growthbook {
             features: resp.features,
         }));
         let gb_rw_clone = Arc::clone(&growthbook_writable);
 
         tokio::spawn(async move {
-            updated_features_task(gb_gatewway, gb_rw_clone, default_interval).await;
+            updated_features_task(gb_gateway, gb_rw_clone, default_interval).await;
         });
 
         Ok(GrowthBookClient {
