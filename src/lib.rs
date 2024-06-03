@@ -1,11 +1,11 @@
+pub mod client;
 pub mod dto;
 mod env;
 mod error;
 mod extensions;
 mod feature;
 mod gateway;
-pub mod growthbook;
+mod growthbook;
 mod hash;
 mod infra;
-pub mod model;
-pub mod nb_gateway;
+mod model;
