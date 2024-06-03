@@ -13,8 +13,8 @@ Initializing SDK
 
 ```rust
 let gb_url = "HTTP_OR_HTTPS_URL";
-let sdk_key = "SDK_KEY"; // will be used by features
-let gb = Growthbook::new(gb_url, timeout, cache_ttl)?;
+let sdk_key = "SDK_KEY";
+let gb = GrowthBookClient::new(gb_url, sdk_key, None, None)?;
 
 ```
 
@@ -50,7 +50,6 @@ let default_feature_value = false;
 let attributes: HashMap<String, Vec<String>> = HashMap::new();
 
 let flag: BooleanFlag = gb.is_on(
-    sdk_key,
     feature_name, 
     default_feature_value,
     Some(attributes),
@@ -74,7 +73,6 @@ let default_feature_value = "default-string";
 let attributes: HashMap<String, Vec<String>> = HashMap::new();
 
 let flag: StringFlag = gb.get_string_value(
-    sdk_key,
     feature_name,
     default_feature_value, 
     Some(attributes),
@@ -100,7 +98,6 @@ let default_feature_value = json!({
 let attributes: HashMap<String, Vec<String>> = HashMap::new();
 
 let flag: StructFlag = gb.get_object_value(
-    sdk_key,
     feature_name,
     default_feature_value, 
     Some(attributes),

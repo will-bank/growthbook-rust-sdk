@@ -74,13 +74,13 @@ impl GrowthBookClient {
 
     pub async fn is_on(
         &self,
-        flag_name: &str,
+        feature_name: &str,
         default_response: bool,
         user_attributes: Option<&HashMap<String, Vec<String>>>,
     ) -> Result<BooleanFlag, GrowthbookError> {
         let flag = self
             .read_gb()
-            .check(flag_name, Value::Bool(default_response), user_attributes)
+            .check(feature_name, Value::Bool(default_response), user_attributes)
             .await;
 
         match flag {
@@ -91,14 +91,14 @@ impl GrowthBookClient {
 
     pub async fn get_string_value(
         &self,
-        flag_name: &str,
+        feature_name: &str,
         default_response: &str,
         user_attributes: Option<&HashMap<String, Vec<String>>>,
     ) -> Result<StringFlag, GrowthbookError> {
         let flag = self
             .read_gb()
             .check(
-                flag_name,
+                feature_name,
                 Value::String(String::from(default_response)),
                 user_attributes,
             )
@@ -112,13 +112,13 @@ impl GrowthBookClient {
 
     pub async fn get_object_value(
         &self,
-        flag_name: &str,
+        feature_name: &str,
         default_response: &Value,
         user_attributes: Option<&HashMap<String, Vec<String>>>,
     ) -> Result<ObjectFlag, GrowthbookError> {
         let flag = self
             .read_gb()
-            .check(flag_name, default_response.clone(), user_attributes)
+            .check(feature_name, default_response.clone(), user_attributes)
             .await;
 
         match flag {
