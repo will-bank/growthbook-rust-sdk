@@ -14,7 +14,7 @@ impl FeatureRuleRollout {
         user_attributes: Option<&HashMap<String, Vec<String>>>,
     ) -> Option<Value> {
         if let Some(conditions) = &self.condition {
-            if conditions.is_on(user_attributes) {
+            if conditions.is_on(None) {
                 if let Some(attributes) = user_attributes {
                     if let Some(attribute) = attributes.get(&self.hash_attribute) {
                         return self.check_coverage(attribute, feature_name);

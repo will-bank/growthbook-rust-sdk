@@ -24,7 +24,7 @@ impl ConvertToUsize for String {
 
 impl ConvertToUsize for Value {
     fn convert_to_usize(&self) -> Result<usize, GrowthbookError> {
-        let string = self.convert_to_string()?.replace('.', "");
+        let string = self.convert_to_string().ok().unwrap_or(self.to_string()).replace('.', "");
         string.parse().map_err(GrowthbookError::from)
     }
 }

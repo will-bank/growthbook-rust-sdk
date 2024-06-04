@@ -11,7 +11,7 @@ impl FeatureRuleForce {
         user_attributes: Option<&HashMap<String, Vec<String>>>,
     ) -> Option<Value> {
         if let Some(conditions) = &self.condition {
-            if conditions.is_on(user_attributes) {
+            if conditions.is_on(None) {
                 return Some(self.force.clone());
             }
         }
