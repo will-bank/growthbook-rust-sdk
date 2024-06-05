@@ -3,11 +3,11 @@ mod commons;
 #[cfg(test)]
 mod test {
     use crate::commons::TestContext;
-    use rstest::rstest;
-    use std::collections::HashMap;
-    use serde_json::json;
-    use test_context::test_context;
     use growthbook_rust_sdk::model_public::GrowthBookAttribute;
+    use rstest::rstest;
+    use serde_json::json;
+    use std::collections::HashMap;
+    use test_context::test_context;
 
     #[test_context(TestContext)]
     #[rstest]
@@ -30,7 +30,8 @@ mod test {
     ) -> Result<(), Box<dyn std::error::Error>> {
         let vec = GrowthBookAttribute::from(json!({
             "version": "1.2.3"
-        })).expect("Failed to create attributes");
+        }))
+        .expect("Failed to create attributes");
 
         let flag_state = ctx.growthbook.is_on("lte-flag", true, Some(&vec))?;
 
@@ -47,7 +48,8 @@ mod test {
     ) -> Result<(), Box<dyn std::error::Error>> {
         let vec = GrowthBookAttribute::from(json!({
             "version": "1.2.2"
-        })).expect("Failed to create attributes");
+        }))
+        .expect("Failed to create attributes");
 
         let flag_state = ctx.growthbook.is_on("lte-flag", true, Some(&vec))?;
 
@@ -64,7 +66,8 @@ mod test {
     ) -> Result<(), Box<dyn std::error::Error>> {
         let vec = GrowthBookAttribute::from(json!({
             "version": "1.2.4"
-        })).expect("Failed to create attributes");
+        }))
+        .expect("Failed to create attributes");
 
         let flag_state = ctx.growthbook.is_on("lte-flag", true, Some(&vec))?;
 
@@ -81,7 +84,8 @@ mod test {
     ) -> Result<(), Box<dyn std::error::Error>> {
         let vec = GrowthBookAttribute::from(json!({
             "version": "1.2.4"
-        })).expect("Failed to create attributes");
+        }))
+        .expect("Failed to create attributes");
 
         let flag_state = ctx.growthbook.is_on("lte-flag", true, Some(&vec))?;
 

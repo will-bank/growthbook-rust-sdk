@@ -33,7 +33,8 @@ mod test {
     ) -> Result<(), Box<dyn std::error::Error>> {
         let vec = GrowthBookAttribute::from(json!({
             "version": "1.2.3"
-        })).expect("Failed to create attributes");
+        }))
+        .expect("Failed to create attributes");
 
         let flag_state = ctx.growthbook.is_on("gt-rule", true, Some(&vec))?;
 
@@ -50,7 +51,8 @@ mod test {
     ) -> Result<(), Box<dyn std::error::Error>> {
         let vec = GrowthBookAttribute::from(json!({
             "version": "1.2.2"
-        })).expect("Failed to create attributes");
+        }))
+        .expect("Failed to create attributes");
 
         let flag_state = ctx.growthbook.is_on("gt-rule", true, Some(&vec))?;
 
@@ -67,7 +69,8 @@ mod test {
     ) -> Result<(), Box<dyn std::error::Error>> {
         let vec = GrowthBookAttribute::from(json!({
             "version": "1.2.4"
-        })).expect("Failed to create attributes");
+        }))
+        .expect("Failed to create attributes");
 
         let flag_state = ctx.growthbook.is_on("flaggt-rule", true, Some(&vec))?;
 
@@ -79,12 +82,13 @@ mod test {
     #[test_context(TestContext)]
     #[rstest]
     #[tokio::test]
-    async fn should_return_enabled_true_when_attribute_is_missing(
+    async fn should_return_enabled_false_when_attribute_is_missing(
         ctx: &mut TestContext,
     ) -> Result<(), Box<dyn std::error::Error>> {
         let vec = GrowthBookAttribute::from(json!({
-            "version": "1.2.4"
-        })).expect("Failed to create attributes");
+            "any": "1.2.4"
+        }))
+        .expect("Failed to create attributes");
 
         let flag_state = ctx.growthbook.is_on("gt-rule", true, Some(&vec))?;
 

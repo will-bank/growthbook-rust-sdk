@@ -3,12 +3,12 @@ mod commons;
 #[cfg(test)]
 mod test {
     use crate::commons::TestContext;
+    use growthbook_rust_sdk::model_public::GrowthBookAttribute;
     use rstest::rstest;
-    use std::collections::HashMap;
     use serde_json::json;
+    use std::collections::HashMap;
     use test_context::test_context;
     use uuid::Uuid;
-    use growthbook_rust_sdk::model_public::GrowthBookAttribute;
 
     #[test_context(TestContext)]
     #[rstest]
@@ -32,7 +32,8 @@ mod test {
         let vec = GrowthBookAttribute::from(json!({
             "any-id": Uuid::now_v7(),
             "any-key": Uuid::now_v7(),
-        })).expect("Failed to create attributes");
+        }))
+        .expect("Failed to create attributes");
 
         let flag_state = ctx.growthbook.is_on("flag", true, Some(&vec))?;
 
@@ -50,7 +51,8 @@ mod test {
         let vec = GrowthBookAttribute::from(json!({
             "any-id": "018fcf11-bb67-7789-8d10-fcbb7de4ff7b",
             "any-key": Uuid::now_v7(),
-        })).expect("Failed to create attributes");
+        }))
+        .expect("Failed to create attributes");
 
         let flag_state = ctx.growthbook.is_on("flag", true, Some(&vec))?;
 
@@ -68,7 +70,8 @@ mod test {
         let vec = GrowthBookAttribute::from(json!({
             "any-id": Uuid::now_v7(),
             "any-key": "018fcf64-1827-709a-a8ae-7d206aafb5e2",
-        })).expect("Failed to create attributes");
+        }))
+        .expect("Failed to create attributes");
 
         let flag_state = ctx.growthbook.is_on("flag", true, Some(&vec))?;
 
@@ -86,7 +89,8 @@ mod test {
         let vec = GrowthBookAttribute::from(json!({
             "any-id": "018fcf11-bb67-7789-8d10-fcbb7de4ff7b",
             "any-key": "018fcf64-1827-709a-a8ae-7d206aafb5e2",
-        })).expect("Failed to create attributes");
+        }))
+        .expect("Failed to create attributes");
 
         let flag_state = ctx.growthbook.is_on("flag", false, Some(&vec))?;
 

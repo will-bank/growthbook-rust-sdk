@@ -33,7 +33,8 @@ mod test {
     ) -> Result<(), Box<dyn std::error::Error>> {
         let vec = GrowthBookAttribute::from(json!({
             "any-data": [1, 2]
-        })).expect("Failed to create attributes");
+        }))
+        .expect("Failed to create attributes");
 
         let flag_state = ctx.growthbook.is_on("elem-match-eq", true, Some(&vec))?;
 
@@ -50,7 +51,8 @@ mod test {
     ) -> Result<(), Box<dyn std::error::Error>> {
         let vec = GrowthBookAttribute::from(json!({
             "any-data": [1, 2, 3]
-        })).expect("Failed to create attributes");
+        }))
+        .expect("Failed to create attributes");
 
         let flag_state = ctx.growthbook.is_on("elem-match-eq", false, Some(&vec))?;
 
@@ -67,7 +69,8 @@ mod test {
     ) -> Result<(), Box<dyn std::error::Error>> {
         let vec = GrowthBookAttribute::from(json!({
             "any-data": [3]
-        })).expect("Failed to create attributes");
+        }))
+        .expect("Failed to create attributes");
 
         let flag_state = ctx.growthbook.is_on("elem-match-eq", false, Some(&vec))?;
 
@@ -85,7 +88,8 @@ mod test {
         let map = HashMap::from([(String::from("version"), vec![String::from("3.0")])]);
         let vec = GrowthBookAttribute::from(json!({
             "version": "3.0"
-        })).expect("Failed to create attributes");
+        }))
+        .expect("Failed to create attributes");
 
         let flag_state = ctx.growthbook.is_on("elem-match-eq", true, Some(&vec))?;
 

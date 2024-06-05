@@ -70,8 +70,8 @@ impl ObjectFeature {
     }
 
     pub fn value<T>(&self) -> Result<T, GrowthbookError>
-        where
-                for<'a> T: Deserialize<'a>,
+    where
+        for<'a> T: Deserialize<'a>,
     {
         serde_json::from_value(self.value.clone()).map_err(GrowthbookError::from)
     }
