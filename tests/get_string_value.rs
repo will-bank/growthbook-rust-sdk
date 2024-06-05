@@ -17,7 +17,7 @@ mod test {
 
         let string_flag =
             ctx.growthbook
-                .get_string_value("not-found", &expected_value.clone(), None)?;
+                .string_feature("not-found", &expected_value.clone(), None)?;
 
         assert_eq!(expected_value, string_flag.value);
 
@@ -31,7 +31,7 @@ mod test {
         let expected_value = "018fcf11-bb67-7789-8d10-fcbb7de4ff7b";
         let string_flag =
             ctx.growthbook
-                .get_string_value("fixed-value", &Uuid::now_v7().to_string(), None)?;
+                .string_feature("fixed-value", &Uuid::now_v7().to_string(), None)?;
 
         assert_eq!(expected_value, string_flag.value);
 

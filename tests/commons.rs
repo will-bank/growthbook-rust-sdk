@@ -79,7 +79,7 @@ pub async fn all_cases(mock_server: &MockServer, sdk: Uuid) {
                         "condition": {
                             "any-data": {
                                 "$elemMatch": {
-                                    "$eq": "3"
+                                    "$eq": 3
                                 }
                             }
                         },

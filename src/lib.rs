@@ -8,4 +8,5 @@ mod gateway;
 mod growthbook;
 mod hash;
 mod infra;
-mod model;
+pub mod model_public;
+mod model_private;

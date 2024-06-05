@@ -1,12 +1,12 @@
-use chrono::OutOfRangeError;
 use std::env::VarError;
 use std::error::Error;
 use std::fmt::{Display, Formatter};
 use std::num::ParseIntError;
 
+use chrono::OutOfRangeError;
 use reqwest::Response;
 
-use crate::model::Flag;
+use crate::model_private::Feature;
 
 #[derive(Debug)]
 pub enum GrowthbookErrorCode {
@@ -18,6 +18,7 @@ pub enum GrowthbookErrorCode {
     GrowthbookGateway,
     GrowthbookGatewayDeserialize,
     InvalidResponseValueType,
+    GrowthBookAttributeIsNotObject,
 }
 
 #[derive(Debug)]
@@ -34,14 +35,14 @@ impl GrowthbookError {
         }
     }
 
-    pub fn invalid_response_value_type(flag: Flag, expected_type: &str) -> Self {
+    pub fn invalid_response_value_type(flag: Feature, expected_type: &str) -> Self {
         let value = match flag {
-            Flag::Boolean(it) => it.enabled.to_string(),
-            Flag::String(it) => it.value,
-            Flag::Object(it) => it
+            Feature::Boolean(it) => it.enabled.to_string(),
+            Feature::String(it) => it.value,
+            Feature::Object(it) => it
                 .value::<String>()
                 .unwrap_or(String::from("'ObjectFlag unknown value'")),
-            Flag::Invalid() => String::from("'INVALID TYPE'"),
+            Feature::Invalid() => String::from("'INVALID TYPE'"),
         };
 
         GrowthbookError {

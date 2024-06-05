@@ -1,13 +1,15 @@
 use std::collections::HashMap;
 
-use crate::dto::Feature;
-use crate::model::{Flag, FlagCreator};
 use serde_json::Value;
 use tracing::info;
 
+use crate::dto::GrowthBookFeature;
+use crate::model_private::{Feature, FeatureCreator};
+use crate::model_public::GrowthBookAttribute;
+
 #[derive(Clone)]
 pub struct Growthbook {
-    pub features: HashMap<String, Feature>,
+    pub features: HashMap<String, GrowthBookFeature>,
 }
 
 impl Growthbook {
@@ -15,8 +17,8 @@ impl Growthbook {
         &self,
         flag_name: &str,
         default_response: Value,
-        user_attributes: Option<&HashMap<String, Vec<String>>>,
-    ) -> Flag {
+        user_attributes: Option<&Vec<GrowthBookAttribute>>,
+    ) -> Feature {
         let optional_feature = self
             .features
             .iter()
@@ -24,12 +26,12 @@ impl Growthbook {
 
         if let Some((_, feature)) = optional_feature {
             let (value, experiment_key) = feature.get_value(flag_name, user_attributes);
-            value.create_flag(experiment_key)
+            value.create(experiment_key)
         } else {
             info!(
                         "[growthbook-sdk] Feature {flag_name} not found, returning default value={default_response}"
                     );
-            default_response.create_flag(None)
+            default_response.create(None)
         }
     }
 }

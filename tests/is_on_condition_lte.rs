@@ -5,7 +5,9 @@ mod test {
     use crate::commons::TestContext;
     use rstest::rstest;
     use std::collections::HashMap;
+    use serde_json::json;
     use test_context::test_context;
+    use growthbook_rust_sdk::model_public::GrowthBookAttribute;
 
     #[test_context(TestContext)]
     #[rstest]
@@ -26,9 +28,11 @@ mod test {
     async fn should_return_enabled_true_when_is_equals(
         ctx: &mut TestContext,
     ) -> Result<(), Box<dyn std::error::Error>> {
-        let map = HashMap::from([(String::from("version"), vec![String::from("1.2.3")])]);
+        let vec = GrowthBookAttribute::from(json!({
+            "version": "1.2.3"
+        })).expect("Failed to create attributes");
 
-        let flag_state = ctx.growthbook.is_on("lte-flag", true, Some(&map))?;
+        let flag_state = ctx.growthbook.is_on("lte-flag", true, Some(&vec))?;
 
         assert!(flag_state.enabled);
 
@@ -41,9 +45,11 @@ mod test {
     async fn should_return_enabled_true_when_is_less_then(
         ctx: &mut TestContext,
     ) -> Result<(), Box<dyn std::error::Error>> {
-        let map = HashMap::from([(String::from("version"), vec![String::from("1.2.2")])]);
+        let vec = GrowthBookAttribute::from(json!({
+            "version": "1.2.2"
+        })).expect("Failed to create attributes");
 
-        let flag_state = ctx.growthbook.is_on("lte-flag", true, Some(&map))?;
+        let flag_state = ctx.growthbook.is_on("lte-flag", true, Some(&vec))?;
 
         assert!(flag_state.enabled);
 
@@ -56,9 +62,11 @@ mod test {
     async fn should_return_enabled_false_when_is_greater_then(
         ctx: &mut TestContext,
     ) -> Result<(), Box<dyn std::error::Error>> {
-        let map = HashMap::from([(String::from("version"), vec![String::from("1.2.4")])]);
+        let vec = GrowthBookAttribute::from(json!({
+            "version": "1.2.4"
+        })).expect("Failed to create attributes");
 
-        let flag_state = ctx.growthbook.is_on("lte-flag", true, Some(&map))?;
+        let flag_state = ctx.growthbook.is_on("lte-flag", true, Some(&vec))?;
 
         assert!(!flag_state.enabled);
 
@@ -71,9 +79,11 @@ mod test {
     async fn should_return_enabled_true_when_attribute_is_missing(
         ctx: &mut TestContext,
     ) -> Result<(), Box<dyn std::error::Error>> {
-        let map = HashMap::from([(String::from("any"), vec![String::from("1.2.4")])]);
+        let vec = GrowthBookAttribute::from(json!({
+            "version": "1.2.4"
+        })).expect("Failed to create attributes");
 
-        let flag_state = ctx.growthbook.is_on("lte-flag", true, Some(&map))?;
+        let flag_state = ctx.growthbook.is_on("lte-flag", true, Some(&vec))?;
 
         assert!(!flag_state.enabled);
 

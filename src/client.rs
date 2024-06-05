@@ -1,14 +1,17 @@
+use std::collections::HashMap;
+use std::sync::{Arc, RwLock};
+use std::time::Duration;
+
+use serde_json::Value;
+use tokio::time::sleep;
+use tracing::{error, info};
+
 use crate::env::Environment;
 use crate::error::GrowthbookError;
 use crate::gateway::GrowthbookGateway;
 use crate::growthbook::Growthbook;
-use crate::model::{BooleanFlag, Flag, ObjectFlag, StringFlag};
-use serde_json::Value;
-use std::collections::HashMap;
-use std::sync::{Arc, RwLock};
-use std::time::Duration;
-use tokio::time::sleep;
-use tracing::{error, info};
+use crate::model_private::{BooleanFeature, Feature, ObjectFeature, StringFeature};
+use crate::model_public::GrowthBookAttribute;
 
 #[derive(Clone)]
 pub struct GrowthBookClient {
@@ -77,24 +80,24 @@ impl GrowthBookClient {
         &self,
         feature_name: &str,
         default_response: bool,
-        user_attributes: Option<&HashMap<String, Vec<String>>>,
-    ) -> Result<BooleanFlag, GrowthbookError> {
+        user_attributes: Option<&Vec<GrowthBookAttribute>>,
+    ) -> Result<BooleanFeature, GrowthbookError> {
         let flag =
             self.read_gb()
                 .check(feature_name, Value::Bool(default_response), user_attributes);
 
         match flag {
-            Flag::Boolean(it) => Ok(it),
+            Feature::Boolean(it) => Ok(it),
             it => Err(GrowthbookError::invalid_response_value_type(it, "boolean")),
         }
     }
 
-    pub fn get_string_value(
+    pub fn string_feature(
         &self,
         feature_name: &str,
         default_response: &str,
-        user_attributes: Option<&HashMap<String, Vec<String>>>,
-    ) -> Result<StringFlag, GrowthbookError> {
+        user_attributes: Option<&Vec<GrowthBookAttribute>>,
+    ) -> Result<StringFeature, GrowthbookError> {
         let flag = self.read_gb().check(
             feature_name,
             Value::String(String::from(default_response)),
@@ -102,23 +105,23 @@ impl GrowthBookClient {
         );
 
         match flag {
-            Flag::String(it) => Ok(it),
+            Feature::String(it) => Ok(it),
             it => Err(GrowthbookError::invalid_response_value_type(it, "String")),
         }
     }
 
-    pub fn get_object_value(
+    pub fn object_feature(
         &self,
         feature_name: &str,
         default_response: &Value,
-        user_attributes: Option<&HashMap<String, Vec<String>>>,
-    ) -> Result<ObjectFlag, GrowthbookError> {
+        user_attributes: Option<&Vec<GrowthBookAttribute>>,
+    ) -> Result<ObjectFeature, GrowthbookError> {
         let flag = self
             .read_gb()
             .check(feature_name, default_response.clone(), user_attributes);
 
         match flag {
-            Flag::Object(it) => Ok(it),
+            Feature::Object(it) => Ok(it),
             it => Err(GrowthbookError::invalid_response_value_type(it, "Object")),
         }
     }

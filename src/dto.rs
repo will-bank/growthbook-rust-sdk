@@ -1,57 +1,83 @@
 use std::collections::HashMap;
 
+use crate::model_public::{GrowthBookAttribute, GrowthBookAttributeValue};
 use serde::Deserialize;
 use serde_json::Value;
 
 #[derive(Deserialize, Clone, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct GrowthBookResponse {
-    pub features: HashMap<String, Feature>,
+    pub features: HashMap<String, GrowthBookFeature>,
 }
 
 #[derive(Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
-pub struct Feature {
+pub struct GrowthBookFeature {
     pub default_value: Value,
-    pub rules: Option<Vec<FeatureRule>>,
+    pub rules: Option<Vec<GrowthBookFeatureRule>>,
 }
 
 #[derive(Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
-pub struct FeatureRuleMeta {
+pub struct GrowthBookFeatureRuleMeta {
     pub key: String,
 }
 
 #[derive(Deserialize, Clone)]
 #[serde(untagged)]
-pub enum FeatureRule {
-    Experiment(FeatureRuleExperiment),
-    Rollout(FeatureRuleRollout),
-    Force(FeatureRuleForce), // needs to be the last one
+pub enum GrowthBookFeatureRule {
+    Experiment(GrowthBookFeatureRuleExperiment),
+    Rollout(GrowthBookFeatureRuleRollout),
+    Force(GrowthBookFeatureRuleForce), // needs to be the last one
 }
 
 #[derive(Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
-pub struct FeatureRuleForce {
+pub struct GrowthBookFeatureRuleForce {
     pub force: Value,
-    pub condition: Option<HashMap<String, Value>>,
+    condition: Option<HashMap<String, Value>>,
 }
 
 #[derive(Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
-pub struct FeatureRuleRollout {
+pub struct GrowthBookFeatureRuleRollout {
     pub force: Value,
     pub coverage: f32,
-    pub condition: Option<HashMap<String, Value>>,
+    condition: Option<HashMap<String, Value>>,
     pub hash_attribute: String,
 }
 
-pub struct FeatureRuleExperimentRange {
+#[derive(Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct GrowthBookFeatureRuleExperiment {
+    key: Option<String>,
+    pub coverage: Option<f32>,
+    seed: Option<String>,
+    pub hash_version: Option<i64>,
+    pub hash_attribute: String,
+    pub variations: Vec<Value>,
+    weights: Vec<f32>,
+    pub meta: Vec<GrowthBookFeatureRuleMeta>,
+}
+
+pub struct GrowthBookFeatureRuleExperimentRange {
     pub start: f32,
     pub end: f32,
 }
 
-impl FeatureRuleExperimentRange {
+impl GrowthBookFeatureRuleRollout {
+    pub fn conditions(&self) -> Option<Vec<GrowthBookAttribute>> {
+        option_map_to_attributes(self.condition.clone())
+    }
+}
+
+impl GrowthBookFeatureRuleForce {
+    pub fn conditions(&self) -> Option<Vec<GrowthBookAttribute>> {
+        option_map_to_attributes(self.condition.clone())
+    }
+}
+
+impl GrowthBookFeatureRuleExperimentRange {
     fn new(start: f32, end: f32) -> Self {
         Self { start, end }
     }
@@ -61,27 +87,14 @@ impl FeatureRuleExperimentRange {
     }
 }
 
-#[derive(Deserialize, Clone)]
-#[serde(rename_all = "camelCase")]
-pub struct FeatureRuleExperiment {
-    key: Option<String>,
-    pub coverage: Option<f32>,
-    seed: Option<String>,
-    pub hash_version: Option<i64>,
-    pub hash_attribute: String,
-    pub variations: Vec<Value>,
-    weights: Vec<f32>,
-    pub meta: Vec<FeatureRuleMeta>,
-}
-
-impl FeatureRuleExperiment {
+impl GrowthBookFeatureRuleExperiment {
     pub fn seed(&self) -> String {
         self.seed
             .clone()
             .unwrap_or(self.key.clone().unwrap_or(String::from("default")))
     }
 
-    pub fn weights(&self) -> Vec<FeatureRuleExperimentRange> {
+    pub fn weights(&self) -> Vec<GrowthBookFeatureRuleExperimentRange> {
         let clamped_coverage = self.clamped_coverage();
         let adjusted_weights = self.adjusted_weights();
 
@@ -92,7 +105,7 @@ impl FeatureRuleExperiment {
                 let start = acc;
                 acc += weight;
                 let end = start + clamped_coverage * weight;
-                FeatureRuleExperimentRange::new(start, end)
+                GrowthBookFeatureRuleExperimentRange::new(start, end)
             })
             .collect()
     }
@@ -124,5 +137,22 @@ impl FeatureRuleExperiment {
                 }
             }
         }
+    }
+}
+
+pub fn option_map_to_attributes(
+    option_map: Option<HashMap<String, Value>>,
+) -> Option<Vec<GrowthBookAttribute>> {
+    if let Some(conditions) = option_map {
+        Some(
+            conditions
+                .iter()
+                .map(|(k, v)| {
+                    GrowthBookAttribute::new(k.clone(), GrowthBookAttributeValue::from(v.clone()))
+                })
+                .collect(),
+        )
+    } else {
+        None
     }
 }

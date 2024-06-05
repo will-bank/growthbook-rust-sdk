@@ -1,212 +1,226 @@
-use crate::extensions::{ConvertToUsize, FoldVecString};
 use regex::Regex;
-use serde_json::{json, Value};
-use std::collections::HashMap;
 use serde::Deserialize;
+use serde_json::Value;
+
+use crate::extensions::FindGrowthBookAttribute;
+use crate::model_public::{GrowthBookAttribute, GrowthBookAttributeValue};
 
 pub trait ConditionEnabledCheck {
-    fn is_on(&self, user_attributes: Option<&HashMap<String, Value>>) -> bool;
+    fn is_on(&self, user_attributes: &Vec<GrowthBookAttribute>) -> bool;
 }
 
-impl ConditionEnabledCheck for HashMap<String, Value> {
-    fn is_on(&self, user_attributes: Option<&HashMap<String, Value>>) -> bool {
-        if let Some(attributes) = user_attributes {
-            evaluate(self, None, attributes)
-        } else {
-            false
-        }
+impl ConditionEnabledCheck for Vec<GrowthBookAttribute> {
+    fn is_on(&self, user_attributes: &Vec<GrowthBookAttribute>) -> bool {
+        self.iter()
+            .all(|feature_attribute| is_on(None, feature_attribute, user_attributes))
     }
-}
-
-fn evaluate(
-    map: &HashMap<String, Value>,
-    parent_key: Option<String>,
-    attributes: &HashMap<String, Value>,
-) -> bool {
-    map.iter()
-        .all(|(key, value)| is_on(parent_key.clone(), key, value, attributes))
 }
 
 fn is_on(
-    parent_key: Option<String>,
-    key: &str,
-    value: &Value,
-    user_attributes: &HashMap<String, Value>,
+    parent_key: Option<&GrowthBookAttribute>,
+    feature_attribute: &GrowthBookAttribute,
+    user_attributes: &Vec<GrowthBookAttribute>,
 ) -> bool {
-    match key {
-        "$not" => {
-            let next_elem = value_struct_to_hash_map(value);
-            let a = !evaluate(
-                &next_elem,
-                parent_key,
-                user_attributes,
-            );
-            println!("not={a}");
-            a
-        }
-        "$and" => {
-            let next_elements = value_array_to_hash_map(value);
-            next_elements.iter().all(|elem| {
-                let map = HashMap::from([(String::from(""), elem.clone())]);
-                let a = evaluate(&map, parent_key.clone(), user_attributes);
-                println!("and={a}");
-                a
-            })
-        }
-        "$or" => {
-            let next_elements = value_array_to_hash_map(value);
-            next_elements.iter().any(|elem| {
-                let map = HashMap::from([(String::from(""), elem.clone())]);
-                let a = evaluate(&map, parent_key.clone(), user_attributes);
-                println!("or={a}");
-                a
-            })
-        }
-        "$in" => {
-            let next_elements = value_array_to_hash_map(value);
-            next_elements.iter().any(|elem| {
-                let map = HashMap::from([(String::from(""), elem.clone())]);
-                let a = evaluate(&map, parent_key.clone(), user_attributes);
-                println!("in={a}");
-                a
-            })
-        }
-        "$gt" => evaluate_usize(
-            parent_key,
-            key,
-            value,
-            user_attributes,
-            |feature_attribute, user_attribute| {
-                let a = feature_attribute < user_attribute;
-                println!("gt={a}");
-                a
-            },
-        ),
-        "$gte" => evaluate_usize(
-            parent_key,
-            key,
-            value,
-            user_attributes,
-            |feature_attribute, user_attribute| { 
-                let a = feature_attribute <= user_attribute;
-                println!("gte={a}");
-                a
-            },
-        ),
-        "$lt" => evaluate_usize(
-            parent_key,
-            key,
-            value,
-            user_attributes,
-            |feature_attribute, user_attribute| {
-                let a = feature_attribute > user_attribute;
-                println!("lte={a}");
-                a
-            },
-        ),
-        "$lte" => evaluate_usize(
-            parent_key,
-            key,
-            value,
-            user_attributes,
-            |feature_attribute, user_attribute| {
-                let a = feature_attribute >= user_attribute;
-                println!("lte={a}");
-                a
-            },
-        ),
-        "$eq" => evaluate_string(
-            parent_key,
-            key,
-            value,
-            user_attributes,
-            |feature_attribute, user_attribute| {
-                let a = feature_attribute == user_attribute;
-                println!("eq={a}");
-                a
-            },
-        ),
-        "$exists" => evaluate_exists(
-            parent_key,
-            key,
-            value,
-            user_attributes,
-        ),
-        "$regex" => evaluate_string(
-            parent_key,
-            key,
-            value,
-            user_attributes,
-            |feature_attribute, user_attribute| {
-                let a = if let Ok(regex) = Regex::new(feature_attribute) {
-                    regex.is_match(user_attribute)
-                } else {
+    match feature_attribute.key.as_str() {
+        "$not" => not_condition(parent_key, &feature_attribute, user_attributes),
+        "$and" => and_condition(parent_key, &feature_attribute, user_attributes),
+        "$or" => or_condition(parent_key, &feature_attribute, user_attributes),
+        "$in" => in_condition(parent_key, &feature_attribute, user_attributes),
+        "$gt" => gt_condition(parent_key, &feature_attribute, user_attributes),
+        "$gte" => gte_condition(parent_key, &feature_attribute, user_attributes),
+        "$lt" => lt_condition(parent_key, &feature_attribute, user_attributes),
+        "$lte" => lte_condition(parent_key, &feature_attribute, user_attributes),
+        "$eq" => eq_condition(parent_key, &feature_attribute, user_attributes),
+        "$exists" => exists_condition(parent_key, &feature_attribute, user_attributes),
+        "$regex" => regex_condition(parent_key, &feature_attribute, user_attributes),
+        "$elemMatch" => elem_match_condition(parent_key, &feature_attribute, user_attributes),
+        _ => {
+            match &feature_attribute.value {
+                GrowthBookAttributeValue::String(_) => {
+                    println!("is string={:?}", &feature_attribute.key);
+                    eq_condition(parent_key, feature_attribute, user_attributes)
+                }
+                GrowthBookAttributeValue::Array(_) => {
+                    println!("is array={:?}", &feature_attribute.key);
                     false
-                };
-                println!("regex result={a} for regex={feature_attribute} and value={user_attribute}");
-                a
-            },
-        ),
-        "$elemMatch" => {
-            let next_elem = value_struct_to_hash_map(value);
-            let attribute_key = parent_key.clone().unwrap_or(key.to_string());
-            let a = if let Some(user_attribute_values) = get_as_array(&attribute_key, user_attributes) {
-                user_attribute_values.iter().any(|value| {
-                    let user_attribute_elem =
-                        HashMap::from([(attribute_key.clone(), value.clone())]);
-                    let a = evaluate(
-                        &next_elem,
-                        Some(attribute_key.clone()),
-                        &user_attribute_elem,
-                    );
-                    a
-                })
-            } else {
-                false
-            };
-            
-            println!("$elemMatch result={a}");
-            a
-        }
-        &_ => {
-            if value.is_object() {
-                let next_elem = value_struct_to_hash_map(value);
-                let a = evaluate(
-                    &next_elem,
-                    Some(parent_key.filter(|s| !s.is_empty()).unwrap_or(String::from(key))),
-                    user_attributes,
-                );
-                println!("object result={a} for next_elem={:?}", next_elem);
-                a
-            } else {
-                evaluate_string(
-                    parent_key,
-                    key,
-                    value,
-                    user_attributes,
-                    |feature_attribute, user_attribute| { 
-                        let a = feature_attribute == user_attribute;
-                        println!("string result={a} for feature={feature_attribute} and value={user_attribute}");
-                        a
-                    },
-                )
+                }
+                GrowthBookAttributeValue::Object(it) => {
+                    println!("is object={:?}", &feature_attribute.key);
+                    it.iter().all(|next| is_on(Some(feature_attribute), next, user_attributes))
+                }
+                it => {
+                    println!("key not found={:?} is={:?}", &feature_attribute.key, it);
+                    false
+                }
             }
-        }
+        },
     }
 }
 
-fn evaluate_usize(
-    parent_key: Option<String>,
-    key: &str,
-    value: &Value,
-    user_attributes: &HashMap<String, Value>,
-    evaluate: fn(usize, usize) -> bool,
+fn in_condition(parent_key: Option<&GrowthBookAttribute>, feature_attribute: &GrowthBookAttribute, user_attributes: &Vec<GrowthBookAttribute>) -> bool {
+    let a= if let Some(user_value) = user_attributes.find_value(&parent_key.unwrap_or(feature_attribute).key) {
+        match &feature_attribute.value {
+            GrowthBookAttributeValue::Array(it) => {
+                it.iter().any(|next| {
+                    next == &user_value
+                })
+            }
+            _ => false,
+        }
+    } else {
+        false
+    };
+    println!("in_condition={a}");
+    a
+}
+
+fn or_condition(_parent_key: Option<&GrowthBookAttribute>, feature_attribute: &GrowthBookAttribute, user_attributes: &Vec<GrowthBookAttribute>) -> bool {
+    let a= match &feature_attribute.value {
+        GrowthBookAttributeValue::Array(it) => {
+            it.iter().all(|next_value| {
+                match next_value {
+                    GrowthBookAttributeValue::Object(feature_value) => {
+                        feature_value.iter().all(|next_attribute| {
+                            is_on(None, next_attribute, user_attributes)
+                        })
+                    },
+                    _ => false
+                }
+            })
+        }
+        _ => false,
+    };
+    println!("or_condition={a}");
+    a
+}
+
+fn not_condition(parent_key: Option<&GrowthBookAttribute>, feature_attribute: &GrowthBookAttribute, user_attributes: &Vec<GrowthBookAttribute>) -> bool {
+    let a= match &feature_attribute.value {
+        GrowthBookAttributeValue::Object(it) => {
+            it.iter().all(|next| !is_on(parent_key, next, user_attributes))
+        }
+        _ => false,
+    };
+    println!("not_condition={a}");
+    a
+}
+
+fn and_condition(_parent_key: Option<&GrowthBookAttribute>, feature_attribute: &GrowthBookAttribute, user_attributes: &Vec<GrowthBookAttribute>) -> bool {
+    let a= match &feature_attribute.value {
+        GrowthBookAttributeValue::Array(it) => {
+            it.iter().all(|next_value| {
+                match next_value {
+                    GrowthBookAttributeValue::Object(feature_value) => {
+                        feature_value.iter().all(|next_attribute| {
+                            is_on(None, next_attribute, user_attributes)
+                        })
+                    },
+                    _ => false
+                }
+            })
+        }
+        _ => false,
+    };
+    println!("and_condition={a}");
+    a
+}
+
+fn gt_condition(parent_key: Option<&GrowthBookAttribute>, feature_attribute: &GrowthBookAttribute, user_attributes: &Vec<GrowthBookAttribute>) -> bool {
+    let a= number_condition_evaluate(parent_key, feature_attribute, user_attributes, |feature_number, user_number| feature_number < user_number);
+    println!("gt_condition={a}");
+    a
+}
+
+fn gte_condition(parent_key: Option<&GrowthBookAttribute>, feature_attribute: &GrowthBookAttribute, user_attributes: &Vec<GrowthBookAttribute>) -> bool {
+    let a= number_condition_evaluate(parent_key, feature_attribute, user_attributes, |feature_number, user_number| feature_number <= user_number);
+    println!("gte_condition={a}");
+    a
+}
+
+fn lt_condition(parent_key: Option<&GrowthBookAttribute>, feature_attribute: &GrowthBookAttribute, user_attributes: &Vec<GrowthBookAttribute>) -> bool {
+    let a= number_condition_evaluate(parent_key, feature_attribute, user_attributes, |feature_number, user_number| feature_number > user_number);
+    println!("lt_condition={a}");
+    a
+}
+
+fn lte_condition(parent_key: Option<&GrowthBookAttribute>, feature_attribute: &GrowthBookAttribute, user_attributes: &Vec<GrowthBookAttribute>) -> bool {
+    let a= number_condition_evaluate(parent_key, feature_attribute, user_attributes, |feature_number, user_number| feature_number >= user_number);
+    println!("lte_condition={a}");
+    a
+}
+
+fn number_condition_evaluate(
+    parent_key: Option<&GrowthBookAttribute>,
+    feature_attribute: &GrowthBookAttribute,
+    user_attributes: &Vec<GrowthBookAttribute>,
+    condition: fn(f64, f64) -> bool,
 ) -> bool {
-    let attribute_key = &parent_key.clone().unwrap_or(String::from(key));
-    if let Some(attribute) = get_as_string(&attribute_key, user_attributes) {
-        if let Ok(feature_attribute) = value.convert_to_usize() {
-            if let Ok(user_attribute) = attribute.convert_to_usize() {
-                evaluate(feature_attribute, user_attribute)
+    let a = if let Some(user_value) = user_attributes.find_value(&parent_key.unwrap_or(feature_attribute).key) {
+        let feature_number = if let GrowthBookAttributeValue::Int(it) = feature_attribute.value {
+            it as f64
+        } else if let GrowthBookAttributeValue::Float(it) = feature_attribute.value {
+            it
+        } else if let GrowthBookAttributeValue::String(string_number) = &feature_attribute.value {
+            if let Ok(it) = string_number.replace(".", "").parse::<f64>() {
+                it
+            } else {
+                return false;
+            }
+        } else {
+            return false;
+        };
+
+        let user_number = if let GrowthBookAttributeValue::Int(it) = user_value {
+            it as f64
+        } else if let GrowthBookAttributeValue::Float(it) = user_value {
+            it
+        } else if let GrowthBookAttributeValue::String(string_number) = &user_value {
+            if let Ok(it) = string_number.replace(".", "").parse::<f64>() {
+                it
+            } else {
+                return false;
+            }
+        } else {
+            return false;
+        };
+
+        condition(feature_number, user_number)
+    } else {
+        false
+    };
+    println!("number_condition_evaluate={a}");
+    a
+}
+
+fn eq_condition(parent_key: Option<&GrowthBookAttribute>, feature_attribute: &GrowthBookAttribute, user_attributes: &Vec<GrowthBookAttribute>) -> bool {
+    let a = if let Some(user_value) = user_attributes.find_value(&parent_key.unwrap_or(feature_attribute).key) {
+        user_value == feature_attribute.value
+    } else {
+        false
+    };
+    println!("eq_condition={a}");
+    a
+}
+
+fn exists_condition(parent_key: Option<&GrowthBookAttribute>, feature_attribute: &GrowthBookAttribute, user_attributes: &Vec<GrowthBookAttribute>) -> bool {
+    let a = if let GrowthBookAttributeValue::Bool(it) = feature_attribute.value {
+        if let Some(_) = user_attributes.find_value(&parent_key.unwrap_or(feature_attribute).key) {
+            it == true
+        } else {
+            it == false
+        }
+    } else {
+        false
+    };
+    println!("exists_condition={a}");
+    a
+}
+
+fn regex_condition(parent_key: Option<&GrowthBookAttribute>, feature_attribute: &GrowthBookAttribute, user_attributes: &Vec<GrowthBookAttribute>) -> bool {
+    let a = if let GrowthBookAttributeValue::String(it) = &feature_attribute.value {
+        if let Ok(regex) = Regex::new(it) {
+            if let Some(user_value) = user_attributes.find_value(&parent_key.unwrap_or(feature_attribute).key) {
+                regex.is_match(&user_value.to_string())
             } else {
                 false
             }
@@ -215,122 +229,38 @@ fn evaluate_usize(
         }
     } else {
         false
-    }
+    };
+    println!("regex_condition={a}");
+    a
 }
 
-fn evaluate_string(
-    parent_key: Option<String>,
-    key: &str,
-    value: &Value,
-    user_attributes: &HashMap<String, Value>,
-    evaluate: fn(&str, &str) -> bool,
-) -> bool {
-    let attribute_key = &parent_key.filter(|s| !s.is_empty()).unwrap_or(String::from(key));
-    if let Some(attribute) = get_as_string(&attribute_key, user_attributes) {
-        if value.is_string() {
-            if let Some(feature_attribute) = value.as_str() {
-                evaluate(feature_attribute, &attribute)
-            } else {
-                false
-            }
-        } else {
-            evaluate(&value.to_string(), &attribute)
+fn elem_match_condition(parent_key: Option<&GrowthBookAttribute>, feature_attribute: &GrowthBookAttribute, user_attributes: &Vec<GrowthBookAttribute>) -> bool {
+    let a = match &feature_attribute.value {
+        GrowthBookAttributeValue::Object(it) => {
+            it.iter().any(|eq_attribute| {
+                if let Some(user_value) = user_attributes.find_value(&parent_key.unwrap_or(feature_attribute).key) {
+                    match user_value {
+                        GrowthBookAttributeValue::Array(user_value_array) => {
+                            user_value_array.iter().any(|item| eq_attribute.value.to_string() == item.to_string())
+                        }
+                        _ => false,
+                    }
+                } else {
+                    false
+                }
+            })
         }
-    } else {
-        false
-    }
-}
-
-fn evaluate_exists(
-    parent_key: Option<String>,
-    key: &str,
-    value: &Value,
-    user_attributes: &HashMap<String, Value>,
-) -> bool {
-    let attribute_key = &parent_key.filter(|s| !s.is_empty()).unwrap_or(String::from(key));
-    if let Some(feature_attribute) = value.as_bool() {
-        if let Some(_) = get_as_string(&attribute_key, user_attributes) {
-            feature_attribute == true
-        } else {
-            feature_attribute == false
-        }
-    } else {
-        false
-    }
-}
-
-fn value_struct_to_hash_map(value: &Value) -> HashMap<String, Value> {
-    if let Some(map) = value.as_object() {
-        let mut hash_map = HashMap::new();
-        for (key, value) in map {
-            hash_map.insert(key.clone(), value.clone());
-        }
-        hash_map
-    } else {
-        HashMap::new()
-    }
-}
-
-fn value_array_to_hash_map(value: &Value) -> Vec<Value> {
-    if let Some(array) = value.as_array() {
-        array.clone()
-    } else {
-        vec![]
-    }
-}
-
-fn get_as_string(key: &str, user_attributes: &HashMap<String, Value>) -> Option<String> {
-    let mut value = Value::Null;
-    for part in key.split(".") {
-        if value.is_null() {
-            if let Some(attribute) = user_attributes.get(part) {
-                value = attribute.clone();
-                continue;
-            } else {
-                return None;
-            }
-        } else {
-            if let Some(attribute) = value.get(part) {
-                value = attribute.clone();
-                continue;
-            } else {
-                return None;
-            }
-        }
-        
-    }
-    if value.is_string() {
-        Some(value.as_str().expect("Failed to convert to str").to_string())
-    } else {
-        Some(value.to_string())
-    }
-}
-
-fn get_as_array(key: &str, user_attributes: &HashMap<String, Value>) -> Option<Vec<Value>> {
-    let mut value = json!({});
-    for part in key.split(".") {
-        if let Some(attribute) = user_attributes.get(part) {
-            value = attribute.clone();
-            continue;
-        } else {
-            return None;
-        }
-    }
-    if value.is_array() {
-        Some(value.as_array().expect("Failed to convert to array").clone())
-    } else {
-        None
-    }
+        _ => false,
+    };
+    println!("elem_match_condition={a}");
+    a
 }
 
 #[cfg(test)]
 mod test {
-    use std::collections::HashMap;
+    use crate::feature::condition::{Cases, EvalCondition, EvalConditionValue, is_on};
+    use crate::model_public::GrowthBookAttribute;
 
-    use serde_json::Value;
-
-    use crate::feature::condition::{Cases, ConditionEnabledCheck, EvalCondition, EvalConditionValue, value_struct_to_hash_map};
-    
     #[tokio::test]
     async fn eval_conditions() -> Result<(), Box<dyn std::error::Error>> {
         let cases = Cases::new();
@@ -339,8 +269,12 @@ mod test {
             let eval_condition = value_to_eval_condition(value);
             println!("--------------------");
             println!("eval_condition={}", eval_condition.name);
-            let map = user_attributes(eval_condition.attribute);
-            let enabled = value_struct_to_hash_map(&eval_condition.condition).is_on(Some(&map));
+            let vec_condition = GrowthBookAttribute::from(eval_condition.condition).expect("Failed to create attributes");
+            let vec_attributes = GrowthBookAttribute::from(eval_condition.attribute).expect("Failed to create attributes");
+            println!("conditions={:?}", vec_condition);
+            println!("attributes={:?}", vec_attributes);
+            println!();
+            let enabled = is_on(None, &vec_condition[0], &vec_attributes);
             println!("--------------------");
             if enabled != eval_condition.result {
                 panic!("EvalCondition failed: {}", eval_condition.name)
@@ -354,15 +288,6 @@ mod test {
         match value {
             EvalConditionValue::CONDITION(condition) => EvalCondition::new(condition),
         }
-    }
-
-    fn user_attributes(value: Value) -> HashMap<String, Value> {
-        let map = value.as_object().expect("");
-        let mut hash_map = HashMap::new();
-        for (key, value) in map {
-            hash_map.insert(key.clone(), value.clone());
-        }
-        hash_map
     }
 }
 
@@ -389,7 +314,10 @@ impl EvalCondition {
     fn new(value: Value) -> Self {
         let array = value.as_array().expect("Failed to convert to array");
         Self {
-            name: array[0].as_str().expect("Failed to convert do str").to_string(),
+            name: array[0]
+                .as_str()
+                .expect("Failed to convert do str")
+                .to_string(),
             condition: array[1].clone(),
             attribute: array[2].clone(),
             result: array[3].as_bool().expect("Failed to convert to bool"),
@@ -408,6 +336,370 @@ fn json() -> String {
 {
   "specVersion": "0.6.0",
   "evalCondition": [
+    [
+      "$groups - match",
+      {
+        "$and": [
+          {
+            "$groups": {
+              "$elemMatch": { "$eq": "a" }
+            }
+          },
+          {
+            "$groups": {
+              "$elemMatch": { "$eq": "b" }
+            }
+          },
+          {
+            "$or": [
+              {
+                "$groups": {
+                  "$elemMatch": { "$eq": "c" }
+                }
+              },
+              {
+                "$groups": {
+                  "$elemMatch": { "$eq": "e" }
+                }
+              }
+            ]
+          },
+          {
+            "$not": {
+              "$groups": {
+                "$elemMatch": { "$eq": "f" }
+              }
+            }
+          },
+          {
+            "$not": {
+              "$groups": {
+                "$elemMatch": { "$eq": "g" }
+              }
+            }
+          }
+        ]
+      },
+      {
+        "$groups": ["a", "b", "c", "d"]
+      },
+      true
+    ],
+    [
+      "$groups - no match",
+      {
+        "$and": [
+          {
+            "$groups": {
+              "$elemMatch": { "$eq": "a" }
+            }
+          },
+          {
+            "$groups": {
+              "$elemMatch": { "$eq": "b" }
+            }
+          },
+          {
+            "$or": [
+              {
+                "$groups": {
+                  "$elemMatch": { "$eq": "c" }
+                }
+              },
+              {
+                "$groups": {
+                  "$elemMatch": { "$eq": "e" }
+                }
+              }
+            ]
+          },
+          {
+            "$not": {
+              "$groups": {
+                "$elemMatch": { "$eq": "d" }
+              }
+            }
+          },
+          {
+            "$not": {
+              "$groups": {
+                "$elemMatch": { "$eq": "g" }
+              }
+            }
+          }
+        ]
+      },
+      {
+        "$groups": ["a", "b", "c", "d"]
+      },
+      false
+    ],
+    [
+      "$and/$or - first or true",
+      {
+        "$and": [
+          {
+            "father.age": {
+              "$gt": 65
+            }
+          },
+          {
+            "$or": [
+              {
+                "bday": {
+                  "$regex": "-12-25$"
+                }
+              },
+              {
+                "name": "santa"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "santa",
+        "bday": "1980-12-20",
+        "father": {
+          "age": 70
+        }
+      },
+      true
+    ],
+    [
+      "$and/$or - second or true",
+      {
+        "$and": [
+          {
+            "father.age": {
+              "$gt": 65
+            }
+          },
+          {
+            "$or": [
+              {
+                "bday": {
+                  "$regex": "-12-25$"
+                }
+              },
+              {
+                "name": "santa"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "barbara",
+        "bday": "1980-12-25",
+        "father": {
+          "age": 70
+        }
+      },
+      true
+    ],
+    [
+      "$and/$or - first and false",
+      {
+        "$and": [
+          {
+            "father.age": {
+              "$gt": 65
+            }
+          },
+          {
+            "$or": [
+              {
+                "bday": {
+                  "$regex": "-12-25$"
+                }
+              },
+              {
+                "name": "santa"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "santa",
+        "bday": "1980-12-25",
+        "father": {
+          "age": 65
+        }
+      },
+      false
+    ],
+    [
+      "$and/$or - both or false",
+      {
+        "$and": [
+          {
+            "father.age": {
+              "$gt": 65
+            }
+          },
+          {
+            "$or": [
+              {
+                "bday": {
+                  "$regex": "-12-25$"
+                }
+              },
+              {
+                "name": "santa"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "barbara",
+        "bday": "1980-11-25",
+        "father": {
+          "age": 70
+        }
+      },
+      false
+    ],
+    [
+      "$and/$or - both and false",
+      {
+        "$and": [
+          {
+            "father.age": {
+              "$gt": 65
+            }
+          },
+          {
+            "$or": [
+              {
+                "bday": {
+                  "$regex": "-12-25$"
+                }
+              },
+              {
+                "name": "santa"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "john smith",
+        "bday": "1956-12-20",
+        "father": {
+          "age": 40
+        }
+      },
+      false
+    ],
+    [
+      "$exists - false pass",
+      {
+        "pets.dog.name": {
+          "$exists": false
+        }
+      },
+      {
+        "hello": "world"
+      },
+      true
+    ],
+    [
+      "$exists - false fail",
+      {
+        "pets.dog.name": {
+          "$exists": false
+        }
+      },
+      {
+        "pets": {
+          "dog": {
+            "name": "fido"
+          }
+        }
+      },
+      false
+    ],
+    [
+      "$exists - true fail",
+      {
+        "pets.dog.name": {
+          "$exists": true
+        }
+      },
+      {
+        "hello": "world"
+      },
+      false
+    ],
+    [
+      "$exists - true pass",
+      {
+        "pets.dog.name": {
+          "$exists": true
+        }
+      },
+      {
+        "pets": {
+          "dog": {
+            "name": "fido"
+          }
+        }
+      },
+      true
+    ],
+    [
+      "equals - multiple datatypes",
+      {
+        "str": "str",
+        "num": 10,
+        "flag": false
+      },
+      {
+        "str": "str",
+        "num": 10,
+        "flag": false
+      },
+      true
+    ],
+    [
+      "$in - pass",
+      {
+        "num": {
+          "$in": [1, 2, 3]
+        }
+      },
+      {
+        "num": 2
+      },
+      true
+    ],
+    [
+      "$in - fail",
+      {
+        "num": {
+          "$in": [1, 2, 3]
+        }
+      },
+      {
+        "num": 4
+      },
+      false
+    ],
+    [
+      "$in - not array",
+      {
+        "num": {
+          "$in": 1
+        }
+      },
+      {
+        "num": 1
+      },
+      false
+    ],
     [
       "$in - array pass 1",
       {

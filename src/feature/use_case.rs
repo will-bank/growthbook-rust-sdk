@@ -1,20 +1,19 @@
-use std::collections::HashMap;
-
 use serde_json::Value;
 use tracing::info;
 
-use crate::dto::{Feature, FeatureRule};
+use crate::dto::{GrowthBookFeature, GrowthBookFeatureRule};
+use crate::model_public::GrowthBookAttribute;
 
-impl Feature {
+impl GrowthBookFeature {
     pub fn get_value(
         &self,
         feature_name: &str,
-        user_attributes: Option<&HashMap<String, Vec<String>>>,
+        user_attributes: Option<&Vec<GrowthBookAttribute>>,
     ) -> (Value, Option<String>) {
         if let Some(rules) = &self.rules {
             for rule in rules {
                 match rule {
-                    FeatureRule::Force(it) => {
+                    GrowthBookFeatureRule::Force(it) => {
                         if let Some(value) = it.get_match_value(user_attributes) {
                             info!(
                                 "Feature {feature_name} value={} for forced rule",
@@ -23,7 +22,7 @@ impl Feature {
                             return (value, None);
                         }
                     }
-                    FeatureRule::Rollout(it) => {
+                    GrowthBookFeatureRule::Rollout(it) => {
                         if let Some(value) = it.get_match_value(feature_name, user_attributes) {
                             info!(
                                 "Feature {feature_name} value={} for rollout",
@@ -32,7 +31,7 @@ impl Feature {
                             return (value, None);
                         }
                     }
-                    FeatureRule::Experiment(it) => {
+                    GrowthBookFeatureRule::Experiment(it) => {
                         if let Some((value, experiment_key)) =
                             it.get_match_value(feature_name, user_attributes)
                         {

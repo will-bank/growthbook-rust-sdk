@@ -1,51 +1,31 @@
-use serde_json::Value;
+use crate::model_public::{GrowthBookAttribute, GrowthBookAttributeValue};
 
-use crate::error::{GrowthbookError, GrowthbookErrorCode};
-
-pub trait ConvertToUsize {
-    fn convert_to_usize(&self) -> Result<usize, GrowthbookError>;
+pub trait FindGrowthBookAttribute {
+    fn find_value(&self, attribute_key: &String) -> Option<GrowthBookAttributeValue>;
 }
 
-pub trait ConvertToString {
-    fn convert_to_string(&self) -> Result<String, GrowthbookError>;
-}
-
-pub trait FoldVecString {
-    fn fold_to_string(&self) -> String;
-}
-
-impl ConvertToUsize for String {
-    fn convert_to_usize(&self) -> Result<usize, GrowthbookError> {
-        self.replace('.', "")
-            .parse::<usize>()
-            .map_err(GrowthbookError::from)
+impl FindGrowthBookAttribute for Vec<GrowthBookAttribute> {
+    fn find_value(&self, attribute_key: &String) -> Option<GrowthBookAttributeValue> {
+        look_for_attribute(0, attribute_key, self).map(|it| it.value)
     }
 }
 
-impl ConvertToUsize for Value {
-    fn convert_to_usize(&self) -> Result<usize, GrowthbookError> {
-        let string = self.convert_to_string().ok().unwrap_or(self.to_string()).replace('.', "");
-        string.parse().map_err(GrowthbookError::from)
-    }
-}
-
-impl ConvertToString for Value {
-    fn convert_to_string(&self) -> Result<String, GrowthbookError> {
-        self.as_str().map(String::from).ok_or(GrowthbookError::new(
-            GrowthbookErrorCode::SerdeDeserialize,
-            &format!("Failed to convert value={self} to str"),
-        ))
-    }
-}
-
-impl FoldVecString for Vec<String> {
-    fn fold_to_string(&self) -> String {
-        self.iter().fold(String::new(), |s1, s2| s1 + s2)
-    }
-}
-
-impl ConvertToUsize for Vec<String> {
-    fn convert_to_usize(&self) -> Result<usize, GrowthbookError> {
-        self.fold_to_string().convert_to_usize()
+fn look_for_attribute(
+    split_index: usize,
+    attribute_key: &String,
+    user_attributes: &Vec<GrowthBookAttribute>,
+) -> Option<GrowthBookAttribute> {
+    let key_part = attribute_key.split(".").collect::<Vec<&str>>()[split_index];
+    let option_attribute = user_attributes.iter().find(|item| item.key == key_part);
+    if let Some(found_attribute) = option_attribute {
+        return match found_attribute.value.clone() {
+            GrowthBookAttributeValue::Object(it) => {
+                look_for_attribute(split_index + 1, attribute_key, &it)
+            }
+            GrowthBookAttributeValue::Empty => None,
+            _ => Some(found_attribute.clone()),
+        };
+    } else {
+        None
     }
 }
