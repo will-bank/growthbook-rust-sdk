@@ -2,8 +2,6 @@ mod commons;
 
 #[cfg(test)]
 mod test {
-    use std::collections::HashMap;
-
     use rstest::rstest;
     use serde_json::json;
     use test_context::test_context;

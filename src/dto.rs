@@ -143,16 +143,12 @@ impl GrowthBookFeatureRuleExperiment {
 pub fn option_map_to_attributes(
     option_map: Option<HashMap<String, Value>>,
 ) -> Option<Vec<GrowthBookAttribute>> {
-    if let Some(conditions) = option_map {
-        Some(
-            conditions
-                .iter()
-                .map(|(k, v)| {
-                    GrowthBookAttribute::new(k.clone(), GrowthBookAttributeValue::from(v.clone()))
-                })
-                .collect(),
-        )
-    } else {
-        None
-    }
+    option_map.map(|conditions| {
+        conditions
+            .iter()
+            .map(|(k, v)| {
+                GrowthBookAttribute::new(k.clone(), GrowthBookAttributeValue::from(v.clone()))
+            })
+            .collect()
+    })
 }

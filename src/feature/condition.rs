@@ -6,11 +6,11 @@ use crate::extensions::FindGrowthBookAttribute;
 use crate::model_public::{GrowthBookAttribute, GrowthBookAttributeValue};
 
 pub trait ConditionEnabledCheck {
-    fn is_on(&self, user_attributes: &Vec<GrowthBookAttribute>) -> bool;
+    fn is_on(&self, user_attributes: &[GrowthBookAttribute]) -> bool;
 }
 
 impl ConditionEnabledCheck for Vec<GrowthBookAttribute> {
-    fn is_on(&self, user_attributes: &Vec<GrowthBookAttribute>) -> bool {
+    fn is_on(&self, user_attributes: &[GrowthBookAttribute]) -> bool {
         self.iter()
             .all(|feature_attribute| is_on(None, feature_attribute, user_attributes))
     }
@@ -19,21 +19,21 @@ impl ConditionEnabledCheck for Vec<GrowthBookAttribute> {
 fn is_on(
     parent_key: Option<&GrowthBookAttribute>,
     feature_attribute: &GrowthBookAttribute,
-    user_attributes: &Vec<GrowthBookAttribute>,
+    user_attributes: &[GrowthBookAttribute],
 ) -> bool {
     match feature_attribute.key.as_str() {
-        "$not" => not_condition(parent_key, &feature_attribute, user_attributes),
-        "$and" => and_condition(parent_key, &feature_attribute, user_attributes),
-        "$or" => or_condition(parent_key, &feature_attribute, user_attributes),
-        "$in" => in_condition(parent_key, &feature_attribute, user_attributes),
-        "$gt" => gt_condition(parent_key, &feature_attribute, user_attributes),
-        "$gte" => gte_condition(parent_key, &feature_attribute, user_attributes),
-        "$lt" => lt_condition(parent_key, &feature_attribute, user_attributes),
-        "$lte" => lte_condition(parent_key, &feature_attribute, user_attributes),
-        "$eq" => eq_condition(parent_key, &feature_attribute, user_attributes),
-        "$exists" => exists_condition(parent_key, &feature_attribute, user_attributes),
-        "$regex" => regex_condition(parent_key, &feature_attribute, user_attributes),
-        "$elemMatch" => elem_match_condition(parent_key, &feature_attribute, user_attributes),
+        "$not" => not_condition(parent_key, feature_attribute, user_attributes),
+        "$and" => and_condition(parent_key, feature_attribute, user_attributes),
+        "$or" => or_condition(parent_key, feature_attribute, user_attributes),
+        "$in" => in_condition(parent_key, feature_attribute, user_attributes),
+        "$gt" => gt_condition(parent_key, feature_attribute, user_attributes),
+        "$gte" => gte_condition(parent_key, feature_attribute, user_attributes),
+        "$lt" => lt_condition(parent_key, feature_attribute, user_attributes),
+        "$lte" => lte_condition(parent_key, feature_attribute, user_attributes),
+        "$eq" => eq_condition(parent_key, feature_attribute, user_attributes),
+        "$exists" => exists_condition(parent_key, feature_attribute, user_attributes),
+        "$regex" => regex_condition(parent_key, feature_attribute, user_attributes),
+        "$elemMatch" => elem_match_condition(parent_key, feature_attribute, user_attributes),
         _ => match &feature_attribute.value {
             GrowthBookAttributeValue::String(_) => {
                 println!("is string={:?}", &feature_attribute.key);
@@ -59,7 +59,7 @@ fn is_on(
 fn in_condition(
     parent_key: Option<&GrowthBookAttribute>,
     feature_attribute: &GrowthBookAttribute,
-    user_attributes: &Vec<GrowthBookAttribute>,
+    user_attributes: &[GrowthBookAttribute],
 ) -> bool {
     let a = if let Some(user_value) =
         user_attributes.find_value(&parent_key.unwrap_or(feature_attribute).key)
@@ -78,7 +78,7 @@ fn in_condition(
 fn or_condition(
     _parent_key: Option<&GrowthBookAttribute>,
     feature_attribute: &GrowthBookAttribute,
-    user_attributes: &Vec<GrowthBookAttribute>,
+    user_attributes: &[GrowthBookAttribute],
 ) -> bool {
     let a = match &feature_attribute.value {
         GrowthBookAttributeValue::Array(it) => it.iter().all(|next_value| match next_value {
@@ -96,7 +96,7 @@ fn or_condition(
 fn not_condition(
     parent_key: Option<&GrowthBookAttribute>,
     feature_attribute: &GrowthBookAttribute,
-    user_attributes: &Vec<GrowthBookAttribute>,
+    user_attributes: &[GrowthBookAttribute],
 ) -> bool {
     let a = match &feature_attribute.value {
         GrowthBookAttributeValue::Object(it) => it
@@ -111,7 +111,7 @@ fn not_condition(
 fn and_condition(
     _parent_key: Option<&GrowthBookAttribute>,
     feature_attribute: &GrowthBookAttribute,
-    user_attributes: &Vec<GrowthBookAttribute>,
+    user_attributes: &[GrowthBookAttribute],
 ) -> bool {
     let a = match &feature_attribute.value {
         GrowthBookAttributeValue::Array(it) => it.iter().all(|next_value| match next_value {
@@ -129,7 +129,7 @@ fn and_condition(
 fn gt_condition(
     parent_key: Option<&GrowthBookAttribute>,
     feature_attribute: &GrowthBookAttribute,
-    user_attributes: &Vec<GrowthBookAttribute>,
+    user_attributes: &[GrowthBookAttribute],
 ) -> bool {
     let a = number_condition_evaluate(
         parent_key,
@@ -144,7 +144,7 @@ fn gt_condition(
 fn gte_condition(
     parent_key: Option<&GrowthBookAttribute>,
     feature_attribute: &GrowthBookAttribute,
-    user_attributes: &Vec<GrowthBookAttribute>,
+    user_attributes: &[GrowthBookAttribute],
 ) -> bool {
     let a = number_condition_evaluate(
         parent_key,
@@ -159,7 +159,7 @@ fn gte_condition(
 fn lt_condition(
     parent_key: Option<&GrowthBookAttribute>,
     feature_attribute: &GrowthBookAttribute,
-    user_attributes: &Vec<GrowthBookAttribute>,
+    user_attributes: &[GrowthBookAttribute],
 ) -> bool {
     let a = number_condition_evaluate(
         parent_key,
@@ -174,7 +174,7 @@ fn lt_condition(
 fn lte_condition(
     parent_key: Option<&GrowthBookAttribute>,
     feature_attribute: &GrowthBookAttribute,
-    user_attributes: &Vec<GrowthBookAttribute>,
+    user_attributes: &[GrowthBookAttribute],
 ) -> bool {
     let a = number_condition_evaluate(
         parent_key,
@@ -189,7 +189,7 @@ fn lte_condition(
 fn number_condition_evaluate(
     parent_key: Option<&GrowthBookAttribute>,
     feature_attribute: &GrowthBookAttribute,
-    user_attributes: &Vec<GrowthBookAttribute>,
+    user_attributes: &[GrowthBookAttribute],
     condition: fn(f64, f64) -> bool,
 ) -> bool {
     let a = if let Some(user_value) =
@@ -200,7 +200,7 @@ fn number_condition_evaluate(
         } else if let GrowthBookAttributeValue::Float(it) = feature_attribute.value {
             it
         } else if let GrowthBookAttributeValue::String(string_number) = &feature_attribute.value {
-            if let Ok(it) = string_number.replace(".", "").parse::<f64>() {
+            if let Ok(it) = string_number.replace('.', "").parse::<f64>() {
                 it
             } else {
                 return false;
@@ -214,7 +214,7 @@ fn number_condition_evaluate(
         } else if let GrowthBookAttributeValue::Float(it) = user_value {
             it
         } else if let GrowthBookAttributeValue::String(string_number) = &user_value {
-            if let Ok(it) = string_number.replace(".", "").parse::<f64>() {
+            if let Ok(it) = string_number.replace('.', "").parse::<f64>() {
                 it
             } else {
                 return false;
@@ -234,7 +234,7 @@ fn number_condition_evaluate(
 fn eq_condition(
     parent_key: Option<&GrowthBookAttribute>,
     feature_attribute: &GrowthBookAttribute,
-    user_attributes: &Vec<GrowthBookAttribute>,
+    user_attributes: &[GrowthBookAttribute],
 ) -> bool {
     let a = if let Some(user_value) =
         user_attributes.find_value(&parent_key.unwrap_or(feature_attribute).key)
@@ -250,13 +250,16 @@ fn eq_condition(
 fn exists_condition(
     parent_key: Option<&GrowthBookAttribute>,
     feature_attribute: &GrowthBookAttribute,
-    user_attributes: &Vec<GrowthBookAttribute>,
+    user_attributes: &[GrowthBookAttribute],
 ) -> bool {
     let a = if let GrowthBookAttributeValue::Bool(it) = feature_attribute.value {
-        if let Some(_) = user_attributes.find_value(&parent_key.unwrap_or(feature_attribute).key) {
-            it == true
+        if user_attributes
+            .find_value(&parent_key.unwrap_or(feature_attribute).key)
+            .is_some()
+        {
+            it
         } else {
-            it == false
+            !it
         }
     } else {
         false
@@ -268,7 +271,7 @@ fn exists_condition(
 fn regex_condition(
     parent_key: Option<&GrowthBookAttribute>,
     feature_attribute: &GrowthBookAttribute,
-    user_attributes: &Vec<GrowthBookAttribute>,
+    user_attributes: &[GrowthBookAttribute],
 ) -> bool {
     let a = if let GrowthBookAttributeValue::String(it) = &feature_attribute.value {
         if let Ok(regex) = Regex::new(it) {
@@ -292,19 +295,16 @@ fn regex_condition(
 fn elem_match_condition(
     parent_key: Option<&GrowthBookAttribute>,
     feature_attribute: &GrowthBookAttribute,
-    user_attributes: &Vec<GrowthBookAttribute>,
+    user_attributes: &[GrowthBookAttribute],
 ) -> bool {
     let a = match &feature_attribute.value {
         GrowthBookAttributeValue::Object(it) => it.iter().any(|eq_attribute| {
-            if let Some(user_value) =
+            if let Some(GrowthBookAttributeValue::Array(user_value)) =
                 user_attributes.find_value(&parent_key.unwrap_or(feature_attribute).key)
             {
-                match user_value {
-                    GrowthBookAttributeValue::Array(user_value_array) => user_value_array
-                        .iter()
-                        .any(|item| eq_attribute.value.to_string() == item.to_string()),
-                    _ => false,
-                }
+                user_value
+                    .iter()
+                    .any(|item| eq_attribute.value.to_string() == item.to_string())
             } else {
                 false
             }
@@ -347,7 +347,7 @@ mod test {
 
     fn value_to_eval_condition(value: EvalConditionValue) -> EvalCondition {
         match value {
-            EvalConditionValue::CONDITION(condition) => EvalCondition::new(condition),
+            EvalConditionValue::Condition(condition) => EvalCondition::new(condition),
         }
     }
 }
@@ -355,15 +355,17 @@ mod test {
 #[derive(Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 struct Cases {
+    #[allow(dead_code)]
     eval_condition: Vec<EvalConditionValue>,
 }
 
 #[derive(Deserialize, Clone)]
 #[serde(untagged)]
 enum EvalConditionValue {
-    CONDITION(Value),
+    Condition(Value),
 }
 
+#[allow(dead_code)]
 pub struct EvalCondition {
     name: String,
     condition: Value,
@@ -372,6 +374,7 @@ pub struct EvalCondition {
 }
 
 impl EvalCondition {
+    #[allow(dead_code)]
     fn new(value: Value) -> Self {
         let array = value.as_array().expect("Failed to convert to array");
         Self {
@@ -387,11 +390,13 @@ impl EvalCondition {
 }
 
 impl Cases {
+    #[allow(dead_code)]
     pub fn new() -> Self {
         serde_json::from_str(&json()).expect("Failed to create cases")
     }
 }
 
+#[allow(dead_code)]
 fn json() -> String {
     r#"
 {

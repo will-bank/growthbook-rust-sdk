@@ -1,4 +1,5 @@
 use serde_json::{Map, Value};
+use std::fmt::{Display, Formatter};
 
 use crate::error::{GrowthbookError, GrowthbookErrorCode};
 
@@ -77,20 +78,22 @@ impl From<Value> for GrowthBookAttributeValue {
     }
 }
 
-impl GrowthBookAttributeValue {
-    pub fn to_string(&self) -> String {
-        match self {
+impl Display for GrowthBookAttributeValue {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        let message = match self {
             GrowthBookAttributeValue::Empty => String::new(),
-            GrowthBookAttributeValue::Array(it) => it.iter().fold(String::new(), |acc, value| {
-                format!("{acc}{}", value.to_string())
-            }),
-            GrowthBookAttributeValue::Object(it) => it.iter().fold(String::new(), |acc, att| {
-                format!("{acc}{}", att.value.to_string())
-            }),
+            GrowthBookAttributeValue::Array(it) => it
+                .iter()
+                .fold(String::new(), |acc, value| format!("{acc}{}", value)),
+            GrowthBookAttributeValue::Object(it) => it
+                .iter()
+                .fold(String::new(), |acc, att| format!("{acc}{}", att.value)),
             GrowthBookAttributeValue::String(it) => it.clone(),
             GrowthBookAttributeValue::Int(it) => it.to_string(),
             GrowthBookAttributeValue::Float(it) => it.to_string(),
             GrowthBookAttributeValue::Bool(it) => it.to_string(),
-        }
+        };
+
+        write!(f, "{}", message)
     }
 }

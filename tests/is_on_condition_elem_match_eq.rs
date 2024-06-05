@@ -2,8 +2,6 @@ mod commons;
 
 #[cfg(test)]
 mod test {
-    use std::collections::HashMap;
-
     use rstest::rstest;
     use serde_json::json;
     use test_context::test_context;
@@ -85,7 +83,6 @@ mod test {
     async fn should_return_enabled_false_when_required_attribute_is_missing(
         ctx: &mut TestContext,
     ) -> Result<(), Box<dyn std::error::Error>> {
-        let map = HashMap::from([(String::from("version"), vec![String::from("3.0")])]);
         let vec = GrowthBookAttribute::from(json!({
             "version": "3.0"
         }))

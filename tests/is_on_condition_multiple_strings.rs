@@ -6,7 +6,6 @@ mod test {
     use growthbook_rust_sdk::model_public::GrowthBookAttribute;
     use rstest::rstest;
     use serde_json::json;
-    use std::collections::HashMap;
     use test_context::test_context;
     use uuid::Uuid;
 
