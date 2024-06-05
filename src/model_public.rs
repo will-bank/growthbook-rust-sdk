@@ -1,5 +1,6 @@
 use serde_json::{Map, Value};
 use std::fmt::{Display, Formatter};
+use regex::Regex;
 
 use crate::error::{GrowthbookError, GrowthbookErrorCode};
 
@@ -43,6 +44,19 @@ impl GrowthBookAttribute {
             });
         }
         Ok(attributes)
+    }
+}
+
+impl GrowthBookAttributeValue {
+    pub fn is_number(&self) -> bool {
+        if let Ok(regex) = Regex::new("\\d+") {
+            regex.is_match(&self.to_string().replace('.', ""))
+        } else {
+            false
+        }
+    }
+    pub fn as_f64(&self) -> Option<f64> {
+        self.to_string().replace('.', "").parse::<f64>().ok()
     }
 }
 

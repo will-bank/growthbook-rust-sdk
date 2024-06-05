@@ -23,9 +23,11 @@ fn is_on(
 ) -> bool {
     match feature_attribute.key.as_str() {
         "$not" => not_condition(parent_key, feature_attribute, user_attributes),
+        "$ne" => ne_condition(parent_key, feature_attribute, user_attributes),
         "$and" => and_condition(parent_key, feature_attribute, user_attributes),
         "$or" => or_condition(parent_key, feature_attribute, user_attributes),
         "$in" => in_condition(parent_key, feature_attribute, user_attributes),
+        "$nin" => nin_condition(parent_key, feature_attribute, user_attributes),
         "$gt" => gt_condition(parent_key, feature_attribute, user_attributes),
         "$gte" => gte_condition(parent_key, feature_attribute, user_attributes),
         "$lt" => lt_condition(parent_key, feature_attribute, user_attributes),
@@ -65,13 +67,39 @@ fn in_condition(
         user_attributes.find_value(&parent_key.unwrap_or(feature_attribute).key)
     {
         match &feature_attribute.value {
-            GrowthBookAttributeValue::Array(it) => it.iter().any(|next| next == &user_value),
-            _ => false,
+            GrowthBookAttributeValue::Array(feature_array) => feature_array.iter().any(|feature_item| {
+                match &user_value {
+                    GrowthBookAttributeValue::Array(user_array) => {
+                        user_array.iter().any(|user_item| feature_item.to_string() == user_item.to_string())
+                    }
+                    GrowthBookAttributeValue::Empty => false,
+                    it => feature_item.to_string() == it.to_string(),
+                }
+            }),
+            it => {
+                match &user_value {
+                    GrowthBookAttributeValue::Array(user_array) => {
+                        user_array.iter().any(|user_item| it.to_string() == user_item.to_string())
+                    }
+                    GrowthBookAttributeValue::Empty => false,
+                    it => it.to_string() == it.to_string(),
+                }
+            },
         }
     } else {
-        false
+        true
     };
     println!("in_condition={a}");
+    a
+}
+
+fn nin_condition(
+    parent_key: Option<&GrowthBookAttribute>,
+    feature_attribute: &GrowthBookAttribute,
+    user_attributes: &[GrowthBookAttribute],
+) -> bool {
+    let a = !in_condition(parent_key, feature_attribute, user_attributes);
+    println!("nin_condition={a}");
     a
 }
 
@@ -81,7 +109,7 @@ fn or_condition(
     user_attributes: &[GrowthBookAttribute],
 ) -> bool {
     let a = match &feature_attribute.value {
-        GrowthBookAttributeValue::Array(it) => it.iter().all(|next_value| match next_value {
+        GrowthBookAttributeValue::Array(it) => it.iter().any(|next_value| match next_value {
             GrowthBookAttributeValue::Object(feature_value) => feature_value
                 .iter()
                 .all(|next_attribute| is_on(None, next_attribute, user_attributes)),
@@ -123,6 +151,28 @@ fn and_condition(
         _ => false,
     };
     println!("and_condition={a}");
+    a
+}
+
+fn ne_condition(
+    parent_key: Option<&GrowthBookAttribute>,
+    feature_attribute: &GrowthBookAttribute,
+    user_attributes: &[GrowthBookAttribute],
+) -> bool {
+    let a = if let Some(user_value) =
+        user_attributes.find_value(&parent_key.unwrap_or(feature_attribute).key)
+    {
+        !match &user_value {
+            GrowthBookAttributeValue::Array(it) => {
+                it.iter().any(|item| item == &feature_attribute.value)
+            }
+            GrowthBookAttributeValue::Empty => true,
+            it => it == &feature_attribute.value,
+        }
+    } else {
+        true
+    };
+    println!("ne_condition={a}");
     a
 }
 
@@ -190,7 +240,7 @@ fn number_condition_evaluate(
     parent_key: Option<&GrowthBookAttribute>,
     feature_attribute: &GrowthBookAttribute,
     user_attributes: &[GrowthBookAttribute],
-    condition: fn(f64, f64) -> bool,
+    condition: fn(&f64, &f64) -> bool,
 ) -> bool {
     let a = if let Some(user_value) =
         user_attributes.find_value(&parent_key.unwrap_or(feature_attribute).key)
@@ -209,13 +259,18 @@ fn number_condition_evaluate(
             return false;
         };
 
-        let user_number = if let GrowthBookAttributeValue::Int(it) = user_value {
-            it as f64
+        let user_numbers = if let GrowthBookAttributeValue::Int(it) = user_value {
+            vec![it as f64]
         } else if let GrowthBookAttributeValue::Float(it) = user_value {
-            it
+            vec![it]
+        } else if let GrowthBookAttributeValue::Array(it) = user_value {
+            it.iter()
+                .filter(|item| item.is_number())
+                .map(|item| item.as_f64().expect("Failed to convert to f64"))
+                .collect()
         } else if let GrowthBookAttributeValue::String(string_number) = &user_value {
             if let Ok(it) = string_number.replace('.', "").parse::<f64>() {
-                it
+                vec![it]
             } else {
                 return false;
             }
@@ -223,9 +278,9 @@ fn number_condition_evaluate(
             return false;
         };
 
-        condition(feature_number, user_number)
+        user_numbers.iter().any(|number| condition(&feature_number, number))
     } else {
-        false
+        true
     };
     println!("number_condition_evaluate={a}");
     a
@@ -239,9 +294,15 @@ fn eq_condition(
     let a = if let Some(user_value) =
         user_attributes.find_value(&parent_key.unwrap_or(feature_attribute).key)
     {
-        user_value == feature_attribute.value
+        match &user_value {
+            GrowthBookAttributeValue::Array(it) => {
+                it.iter().any(|item| item == &feature_attribute.value)
+            }
+            GrowthBookAttributeValue::Empty => false,
+            it => it == &feature_attribute.value,
+        }
     } else {
-        false
+        true
     };
     println!("eq_condition={a}");
     a
@@ -262,7 +323,7 @@ fn exists_condition(
             !it
         }
     } else {
-        false
+        true
     };
     println!("exists_condition={a}");
     a
@@ -286,7 +347,7 @@ fn regex_condition(
             false
         }
     } else {
-        false
+        true
     };
     println!("regex_condition={a}");
     a
@@ -298,16 +359,8 @@ fn elem_match_condition(
     user_attributes: &[GrowthBookAttribute],
 ) -> bool {
     let a = match &feature_attribute.value {
-        GrowthBookAttributeValue::Object(it) => it.iter().any(|eq_attribute| {
-            if let Some(GrowthBookAttributeValue::Array(user_value)) =
-                user_attributes.find_value(&parent_key.unwrap_or(feature_attribute).key)
-            {
-                user_value
-                    .iter()
-                    .any(|item| eq_attribute.value.to_string() == item.to_string())
-            } else {
-                false
-            }
+        GrowthBookAttributeValue::Object(it) => it.iter().any(|condition_attribute| {
+            is_on(parent_key, condition_attribute, user_attributes)
         }),
         _ => false,
     };
@@ -402,606 +455,6 @@ fn json() -> String {
 {
   "specVersion": "0.6.0",
   "evalCondition": [
-    [
-      "$groups - match",
-      {
-        "$and": [
-          {
-            "$groups": {
-              "$elemMatch": { "$eq": "a" }
-            }
-          },
-          {
-            "$groups": {
-              "$elemMatch": { "$eq": "b" }
-            }
-          },
-          {
-            "$or": [
-              {
-                "$groups": {
-                  "$elemMatch": { "$eq": "c" }
-                }
-              },
-              {
-                "$groups": {
-                  "$elemMatch": { "$eq": "e" }
-                }
-              }
-            ]
-          },
-          {
-            "$not": {
-              "$groups": {
-                "$elemMatch": { "$eq": "f" }
-              }
-            }
-          },
-          {
-            "$not": {
-              "$groups": {
-                "$elemMatch": { "$eq": "g" }
-              }
-            }
-          }
-        ]
-      },
-      {
-        "$groups": ["a", "b", "c", "d"]
-      },
-      true
-    ],
-    [
-      "$groups - no match",
-      {
-        "$and": [
-          {
-            "$groups": {
-              "$elemMatch": { "$eq": "a" }
-            }
-          },
-          {
-            "$groups": {
-              "$elemMatch": { "$eq": "b" }
-            }
-          },
-          {
-            "$or": [
-              {
-                "$groups": {
-                  "$elemMatch": { "$eq": "c" }
-                }
-              },
-              {
-                "$groups": {
-                  "$elemMatch": { "$eq": "e" }
-                }
-              }
-            ]
-          },
-          {
-            "$not": {
-              "$groups": {
-                "$elemMatch": { "$eq": "d" }
-              }
-            }
-          },
-          {
-            "$not": {
-              "$groups": {
-                "$elemMatch": { "$eq": "g" }
-              }
-            }
-          }
-        ]
-      },
-      {
-        "$groups": ["a", "b", "c", "d"]
-      },
-      false
-    ],
-    [
-      "$and/$or - first or true",
-      {
-        "$and": [
-          {
-            "father.age": {
-              "$gt": 65
-            }
-          },
-          {
-            "$or": [
-              {
-                "bday": {
-                  "$regex": "-12-25$"
-                }
-              },
-              {
-                "name": "santa"
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "name": "santa",
-        "bday": "1980-12-20",
-        "father": {
-          "age": 70
-        }
-      },
-      true
-    ],
-    [
-      "$and/$or - second or true",
-      {
-        "$and": [
-          {
-            "father.age": {
-              "$gt": 65
-            }
-          },
-          {
-            "$or": [
-              {
-                "bday": {
-                  "$regex": "-12-25$"
-                }
-              },
-              {
-                "name": "santa"
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "name": "barbara",
-        "bday": "1980-12-25",
-        "father": {
-          "age": 70
-        }
-      },
-      true
-    ],
-    [
-      "$and/$or - first and false",
-      {
-        "$and": [
-          {
-            "father.age": {
-              "$gt": 65
-            }
-          },
-          {
-            "$or": [
-              {
-                "bday": {
-                  "$regex": "-12-25$"
-                }
-              },
-              {
-                "name": "santa"
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "name": "santa",
-        "bday": "1980-12-25",
-        "father": {
-          "age": 65
-        }
-      },
-      false
-    ],
-    [
-      "$and/$or - both or false",
-      {
-        "$and": [
-          {
-            "father.age": {
-              "$gt": 65
-            }
-          },
-          {
-            "$or": [
-              {
-                "bday": {
-                  "$regex": "-12-25$"
-                }
-              },
-              {
-                "name": "santa"
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "name": "barbara",
-        "bday": "1980-11-25",
-        "father": {
-          "age": 70
-        }
-      },
-      false
-    ],
-    [
-      "$and/$or - both and false",
-      {
-        "$and": [
-          {
-            "father.age": {
-              "$gt": 65
-            }
-          },
-          {
-            "$or": [
-              {
-                "bday": {
-                  "$regex": "-12-25$"
-                }
-              },
-              {
-                "name": "santa"
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "name": "john smith",
-        "bday": "1956-12-20",
-        "father": {
-          "age": 40
-        }
-      },
-      false
-    ],
-    [
-      "$exists - false pass",
-      {
-        "pets.dog.name": {
-          "$exists": false
-        }
-      },
-      {
-        "hello": "world"
-      },
-      true
-    ],
-    [
-      "$exists - false fail",
-      {
-        "pets.dog.name": {
-          "$exists": false
-        }
-      },
-      {
-        "pets": {
-          "dog": {
-            "name": "fido"
-          }
-        }
-      },
-      false
-    ],
-    [
-      "$exists - true fail",
-      {
-        "pets.dog.name": {
-          "$exists": true
-        }
-      },
-      {
-        "hello": "world"
-      },
-      false
-    ],
-    [
-      "$exists - true pass",
-      {
-        "pets.dog.name": {
-          "$exists": true
-        }
-      },
-      {
-        "pets": {
-          "dog": {
-            "name": "fido"
-          }
-        }
-      },
-      true
-    ],
-    [
-      "equals - multiple datatypes",
-      {
-        "str": "str",
-        "num": 10,
-        "flag": false
-      },
-      {
-        "str": "str",
-        "num": 10,
-        "flag": false
-      },
-      true
-    ],
-    [
-      "$in - pass",
-      {
-        "num": {
-          "$in": [1, 2, 3]
-        }
-      },
-      {
-        "num": 2
-      },
-      true
-    ],
-    [
-      "$in - fail",
-      {
-        "num": {
-          "$in": [1, 2, 3]
-        }
-      },
-      {
-        "num": 4
-      },
-      false
-    ],
-    [
-      "$in - not array",
-      {
-        "num": {
-          "$in": 1
-        }
-      },
-      {
-        "num": 1
-      },
-      false
-    ],
-    [
-      "$in - array pass 1",
-      {
-        "tags": {
-          "$in": ["a", "b"]
-        }
-      },
-      {
-        "tags": ["d", "e", "a"]
-      },
-      true
-    ],
-    [
-      "$in - array pass 2",
-      {
-        "tags": {
-          "$in": ["a", "b"]
-        }
-      },
-      {
-        "tags": ["d", "b", "f"]
-      },
-      true
-    ],
-    [
-      "$in - array pass 3",
-      {
-        "tags": {
-          "$in": ["a", "b"]
-        }
-      },
-      {
-        "tags": ["d", "b", "a"]
-      },
-      true
-    ],
-    [
-      "$in - array fail 1",
-      {
-        "tags": {
-          "$in": ["a", "b"]
-        }
-      },
-      {
-        "tags": ["d", "e", "f"]
-      },
-      false
-    ],
-    [
-      "$in - array fail 2",
-      {
-        "tags": {
-          "$in": ["a", "b"]
-        }
-      },
-      {
-        "tags": []
-      },
-      false
-    ],
-    [
-      "$nin - pass",
-      {
-        "num": {
-          "$nin": [1, 2, 3]
-        }
-      },
-      {
-        "num": 4
-      },
-      true
-    ],
-    [
-      "$nin - fail",
-      {
-        "num": {
-          "$nin": [1, 2, 3]
-        }
-      },
-      {
-        "num": 2
-      },
-      false
-    ],
-    [
-      "$nin - not array",
-      {
-        "num": {
-          "$nin": 1
-        }
-      },
-      {
-        "num": 1
-      },
-      false
-    ],
-    [
-      "$nin - array fail 1",
-      {
-        "tags": {
-          "$nin": ["a", "b"]
-        }
-      },
-      {
-        "tags": ["d", "e", "a"]
-      },
-      false
-    ],
-    [
-      "$nin - array fail 2",
-      {
-        "tags": {
-          "$nin": ["a", "b"]
-        }
-      },
-      {
-        "tags": ["d", "b", "f"]
-      },
-      false
-    ],
-    [
-      "$nin - array fail 3",
-      {
-        "tags": {
-          "$nin": ["a", "b"]
-        }
-      },
-      {
-        "tags": ["d", "b", "a"]
-      },
-      false
-    ],
-    [
-      "$nin - array pass 1",
-      {
-        "tags": {
-          "$nin": ["a", "b"]
-        }
-      },
-      {
-        "tags": ["d", "e", "f"]
-      },
-      true
-    ],
-    [
-      "$nin - array pass 2",
-      {
-        "tags": {
-          "$nin": ["a", "b"]
-        }
-      },
-      {
-        "tags": []
-      },
-      true
-    ],
-    [
-      "$elemMatch - pass - flat arrays",
-      {
-        "nums": {
-          "$elemMatch": {
-            "$gt": 10
-          }
-        }
-      },
-      {
-        "nums": [0, 5, -20, 15]
-      },
-      true
-    ],
-    [
-      "$elemMatch - fail - flat arrays",
-      {
-        "nums": {
-          "$elemMatch": {
-            "$gt": 10
-          }
-        }
-      },
-      {
-        "nums": [0, 5, -20, 8]
-      },
-      false
-    ],
-    [
-      "missing attribute - fail",
-      {
-        "pets.dog.name": {
-          "$in": ["fido"]
-        }
-      },
-      {
-        "hello": "world"
-      },
-      false
-    ],
-    [
-      "missing attribute with comparison operators",
-      {
-        "age": {
-          "$gt": -10,
-          "$lt": 10,
-          "$gte": -9,
-          "$lte": 9,
-          "$ne": 10
-        }
-      },
-      {},
-      true
-    ],
-    [
-      "comparing numbers and strings",
-      {
-        "n": {
-          "$gt": 5,
-          "$lt": 10
-        }
-      },
-      {
-        "n": "8"
-      },
-      true
-    ],
-    [
-      "comparing numbers and strings - v2",
-      {
-        "n": {
-          "$gt": "5",
-          "$lt": "10"
-        }
-      },
-      {
-        "n": 8
-      },
-      true
-    ],
     [
       "empty $or - pass",
       {

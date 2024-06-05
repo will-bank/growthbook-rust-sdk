@@ -80,7 +80,7 @@ mod test {
     #[test_context(TestContext)]
     #[rstest]
     #[tokio::test]
-    async fn should_return_enabled_false_when_required_attribute_is_missing(
+    async fn should_return_enabled_true_when_required_attribute_is_missing(
         ctx: &mut TestContext,
     ) -> Result<(), Box<dyn std::error::Error>> {
         let vec = GrowthBookAttribute::from(json!({
@@ -90,7 +90,7 @@ mod test {
 
         let flag_state = ctx.growthbook.is_on("elem-match-eq", true, Some(&vec))?;
 
-        assert!(!flag_state.enabled);
+        assert!(flag_state.enabled);
 
         Ok(())
     }
