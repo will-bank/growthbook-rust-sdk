@@ -9,18 +9,18 @@ use tracing::{error, info};
 use crate::env::Environment;
 use crate::error::GrowthbookError;
 use crate::gateway::GrowthbookGateway;
-use crate::growthbook::Growthbook;
+use crate::growthbook::GrowthBook;
 use crate::model_private::{BooleanFeature, Feature, ObjectFeature, StringFeature};
 use crate::model_public::GrowthBookAttribute;
 
 #[derive(Clone)]
 pub struct GrowthBookClient {
-    pub gb: Arc<RwLock<Growthbook>>,
+    pub gb: Arc<RwLock<GrowthBook>>,
 }
 
 async fn updated_features_task(
     growthbook_gateway: GrowthbookGateway,
-    config: Arc<RwLock<Growthbook>>,
+    config: Arc<RwLock<GrowthBook>>,
     interval: Duration,
 ) {
     loop {
@@ -28,7 +28,7 @@ async fn updated_features_task(
             Ok(new_config) => {
                 let mut writable_config =
                     config.write().expect("problem to create mutex for gb data");
-                let updated_features = Growthbook {
+                let updated_features = GrowthBook {
                     features: new_config.features,
                 };
                 *writable_config = updated_features;
@@ -62,7 +62,7 @@ impl GrowthBookClient {
         });
         let gb_gateway = GrowthbookGateway::new(api_url, sdk_key, default_timeout)?;
         let resp = gb_gateway.get_features(None).await?;
-        let growthbook_writable = Arc::new(RwLock::new(Growthbook {
+        let growthbook_writable = Arc::new(RwLock::new(GrowthBook {
             features: resp.features,
         }));
         let gb_rw_clone = Arc::clone(&growthbook_writable);
@@ -131,7 +131,7 @@ impl GrowthBookClient {
         gb_data.features.len()
     }
 
-    fn read_gb(&self) -> Growthbook {
+    fn read_gb(&self) -> GrowthBook {
         match self.gb.read() {
             Ok(rw_read_guard) => (*rw_read_guard).clone(),
             Err(e) => {
@@ -142,7 +142,7 @@ impl GrowthBookClient {
                         e
                     )
                 );
-                Growthbook {
+                GrowthBook {
                     features: HashMap::new(),
                 }
             }

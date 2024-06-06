@@ -10,20 +10,20 @@ pub struct GrowthBookResponse {
     pub features: HashMap<String, GrowthBookFeature>,
 }
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct GrowthBookFeature {
     pub default_value: Value,
     pub rules: Option<Vec<GrowthBookFeatureRule>>,
 }
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct GrowthBookFeatureRuleMeta {
     pub key: String,
 }
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, Debug)]
 #[serde(untagged)]
 pub enum GrowthBookFeatureRule {
     Experiment(GrowthBookFeatureRuleExperiment),
@@ -31,14 +31,14 @@ pub enum GrowthBookFeatureRule {
     Force(GrowthBookFeatureRuleForce), // needs to be the last one
 }
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct GrowthBookFeatureRuleForce {
     pub force: Value,
     condition: Option<HashMap<String, Value>>,
 }
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct GrowthBookFeatureRuleRollout {
     pub force: Value,
@@ -47,7 +47,7 @@ pub struct GrowthBookFeatureRuleRollout {
     pub hash_attribute: String,
 }
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct GrowthBookFeatureRuleExperiment {
     key: Option<String>,

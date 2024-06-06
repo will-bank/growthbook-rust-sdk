@@ -806,16 +806,13 @@ fn elem_match_condition(
     a
 }
 
-use serde::Deserialize;
-use serde_json::Value;
-use std::fs;
-
 #[cfg(test)]
 mod test {
-    use crate::feature::condition::{
-        Cases, ConditionEnabledCheck, EvalCondition, EvalConditionValue,
-    };
+    use crate::feature::condition::ConditionEnabledCheck;
     use crate::model_public::GrowthBookAttribute;
+    use serde::Deserialize;
+    use serde_json::Value;
+    use std::fs;
 
     #[tokio::test]
     async fn evaluate_conditions() -> Result<(), Box<dyn std::error::Error>> {
@@ -847,51 +844,47 @@ mod test {
             EvalConditionValue::Condition(condition) => EvalCondition::new(condition),
         }
     }
-}
 
-#[derive(Deserialize, Clone)]
-#[serde(rename_all = "camelCase")]
-struct Cases {
-    #[allow(dead_code)]
-    eval_condition: Vec<EvalConditionValue>,
-}
+    #[derive(Deserialize, Clone)]
+    #[serde(rename_all = "camelCase")]
+    struct Cases {
+        eval_condition: Vec<EvalConditionValue>,
+    }
 
-#[derive(Deserialize, Clone)]
-#[serde(untagged)]
-enum EvalConditionValue {
-    Condition(Value),
-}
+    #[derive(Deserialize, Clone)]
+    #[serde(untagged)]
+    enum EvalConditionValue {
+        Condition(Value),
+    }
 
-#[allow(dead_code)]
-pub struct EvalCondition {
-    name: String,
-    condition: Value,
-    attribute: Value,
-    result: bool,
-}
+    pub struct EvalCondition {
+        name: String,
+        condition: Value,
+        attribute: Value,
+        result: bool,
+    }
 
-impl EvalCondition {
-    #[allow(dead_code)]
-    fn new(value: Value) -> Self {
-        let array = value.as_array().expect("Failed to convert to array");
-        Self {
-            name: array[0]
-                .as_str()
-                .expect("Failed to convert do str")
-                .to_string(),
-            condition: array[1].clone(),
-            attribute: array[2].clone(),
-            result: array[3].as_bool().expect("Failed to convert to bool"),
+    impl EvalCondition {
+        fn new(value: Value) -> Self {
+            let array = value.as_array().expect("Failed to convert to array");
+            Self {
+                name: array[0]
+                    .as_str()
+                    .expect("Failed to convert do str")
+                    .to_string(),
+                condition: array[1].clone(),
+                attribute: array[2].clone(),
+                result: array[3].as_bool().expect("Failed to convert to bool"),
+            }
         }
     }
-}
 
-impl Cases {
-    #[allow(dead_code)]
-    pub fn new() -> Self {
-        let contents = fs::read_to_string("./tests/all_cases.json")
-            .expect("Should have been able to read the file");
+    impl Cases {
+        pub fn new() -> Self {
+            let contents = fs::read_to_string("./tests/all_cases.json")
+                .expect("Should have been able to read the file");
 
-        serde_json::from_str(&contents).expect("Failed to create cases")
+            serde_json::from_str(&contents).expect("Failed to create cases")
+        }
     }
 }

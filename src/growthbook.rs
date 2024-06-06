@@ -8,11 +8,11 @@ use crate::model_private::{Feature, FeatureCreator};
 use crate::model_public::GrowthBookAttribute;
 
 #[derive(Clone)]
-pub struct Growthbook {
+pub struct GrowthBook {
     pub features: HashMap<String, GrowthBookFeature>,
 }
 
-impl Growthbook {
+impl GrowthBook {
     pub fn check(
         &self,
         flag_name: &str,
