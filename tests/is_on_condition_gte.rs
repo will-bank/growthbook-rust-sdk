@@ -88,7 +88,7 @@ mod test {
 
         let flag_state = ctx.growthbook.is_on("gte-rule", true, Some(&vec))?;
 
-        assert!(!flag_state.enabled);
+        assert!(flag_state.enabled);
 
         Ok(())
     }

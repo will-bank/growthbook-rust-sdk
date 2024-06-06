@@ -79,7 +79,7 @@ impl From<Value> for GrowthBookAttributeValue {
                 .collect();
             GrowthBookAttributeValue::Array(vec)
         } else {
-            let objects = value
+            let objects: Vec<_> = value
                 .as_object()
                 .unwrap_or(&Map::new())
                 .iter()
@@ -87,7 +87,12 @@ impl From<Value> for GrowthBookAttributeValue {
                     GrowthBookAttribute::new(k.clone(), GrowthBookAttributeValue::from(v.clone()))
                 })
                 .collect();
-            GrowthBookAttributeValue::Object(objects)
+
+            if objects.is_empty() {
+                GrowthBookAttributeValue::Empty
+            } else {
+                GrowthBookAttributeValue::Object(objects)
+            }
         }
     }
 }

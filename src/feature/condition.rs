@@ -12,59 +12,107 @@ pub trait ConditionEnabledCheck {
 impl ConditionEnabledCheck for Vec<GrowthBookAttribute> {
     fn is_on(&self, user_attributes: &[GrowthBookAttribute]) -> bool {
         self.iter()
-            .all(|feature_attribute| is_on(None, feature_attribute, user_attributes))
+            .all(|feature_attribute| is_on(None, feature_attribute, user_attributes, false))
     }
 }
 
 fn is_on(
-    parent_key: Option<&GrowthBookAttribute>,
+    parent_attribute: Option<&GrowthBookAttribute>,
     feature_attribute: &GrowthBookAttribute,
     user_attributes: &[GrowthBookAttribute],
+    array_size: bool,
 ) -> bool {
     match feature_attribute.key.as_str() {
-        "$not" => not_condition(parent_key, feature_attribute, user_attributes),
-        "$ne" => ne_condition(parent_key, feature_attribute, user_attributes),
-        "$and" => and_condition(parent_key, feature_attribute, user_attributes),
-        "$or" => or_condition(parent_key, feature_attribute, user_attributes),
-        "$in" => in_condition(parent_key, feature_attribute, user_attributes),
-        "$nin" => nin_condition(parent_key, feature_attribute, user_attributes),
-        "$gt" => gt_condition(parent_key, feature_attribute, user_attributes),
-        "$gte" => gte_condition(parent_key, feature_attribute, user_attributes),
-        "$lt" => lt_condition(parent_key, feature_attribute, user_attributes),
-        "$lte" => lte_condition(parent_key, feature_attribute, user_attributes),
-        "$eq" => eq_condition(parent_key, feature_attribute, user_attributes),
-        "$exists" => exists_condition(parent_key, feature_attribute, user_attributes),
-        "$regex" => regex_condition(parent_key, feature_attribute, user_attributes),
-        "$elemMatch" => elem_match_condition(parent_key, feature_attribute, user_attributes),
+        "$not" => not_condition(parent_attribute, feature_attribute, user_attributes),
+        "$ne" => ne_condition(parent_attribute, feature_attribute, user_attributes),
+        "$and" => and_condition(parent_attribute, feature_attribute, user_attributes),
+        "$nor" => nor_condition(parent_attribute, feature_attribute, user_attributes),
+        "$or" => or_condition(parent_attribute, feature_attribute, user_attributes),
+        "$in" => in_condition(parent_attribute, feature_attribute, user_attributes),
+        "$nin" => nin_condition(parent_attribute, feature_attribute, user_attributes),
+        "$gt" => gt_condition(parent_attribute, feature_attribute, user_attributes, array_size),
+        "$gte" => gte_condition(parent_attribute, feature_attribute, user_attributes, array_size),
+        "$lt" => lt_condition(parent_attribute, feature_attribute, user_attributes, array_size),
+        "$lte" => lte_condition(parent_attribute, feature_attribute, user_attributes, array_size),
+        "$eq" => eq_condition(parent_attribute, feature_attribute, user_attributes),
+        "$exists" => exists_condition(parent_attribute, feature_attribute, user_attributes),
+        "$regex" => regex_condition(parent_attribute, feature_attribute, user_attributes),
+        "$type" => type_condition(parent_attribute, feature_attribute, user_attributes),
+        "$size" => size_condition(parent_attribute, feature_attribute, user_attributes),
+        "$all" => all_condition(parent_attribute, feature_attribute, user_attributes),
+        "$vgt" => vgt_condition(parent_attribute, feature_attribute, user_attributes),
+        "$vgte" => vgte_condition(parent_attribute, feature_attribute, user_attributes),
+        "$vlt" => vlt_condition(parent_attribute, feature_attribute, user_attributes),
+        "$vlte" => vlte_condition(parent_attribute, feature_attribute, user_attributes),
+        "$veq" => veq_condition(parent_attribute, feature_attribute, user_attributes),
+        "$vne" => vne_condition(parent_attribute, feature_attribute, user_attributes),
+        "$elemMatch" => elem_match_condition(parent_attribute, feature_attribute, user_attributes, array_size),
         _ => match &feature_attribute.value {
             GrowthBookAttributeValue::String(_) => {
-                println!("is string={:?}", &feature_attribute.key);
-                eq_condition(parent_key, feature_attribute, user_attributes)
+                if feature_attribute.key.starts_with('$') {
+                    println!("is unknown operator={:?}", &feature_attribute.key);
+                    false
+                } else {
+                    println!("is string={:?}", &feature_attribute.key);
+                    eq_condition(parent_attribute, feature_attribute, user_attributes)
+                }
             }
-            GrowthBookAttributeValue::Array(_) => {
+            GrowthBookAttributeValue::Array(feature_values) => {
+                let a = if let Some(GrowthBookAttributeValue::Array(user_values)) = user_attributes.find_value(&parent_attribute.unwrap_or(feature_attribute).key) {
+                    if feature_values.len() == user_values.len() {
+                        feature_values.iter().enumerate().all(|(index, value)| {
+                            value == &user_values[index]
+                        })
+                    } else {
+                        false
+                    }
+                } else {
+                    false
+                };
                 println!("is array={:?}", &feature_attribute.key);
-                false
+                a
             }
             GrowthBookAttributeValue::Object(it) => {
                 println!("is object={:?}", &feature_attribute.key);
-                it.iter()
-                    .all(|next| is_on(Some(feature_attribute), next, user_attributes))
+                if it.is_empty() {
+                    user_attributes.find_value(&parent_attribute.unwrap_or(feature_attribute).key).is_none()
+                } else {
+                    it.iter()
+                        .all(|next| {
+                            let parent = feature_attribute.aggregate_key(parent_attribute);
+                            is_on(Some(&parent), next, user_attributes, false)
+                        })
+                }
             }
             it => {
                 println!("key not found={:?} is={:?}", &feature_attribute.key, it);
-                false
+                if let Some(it) = user_attributes.find_value(&parent_attribute.unwrap_or(feature_attribute).key) {
+                    it == GrowthBookAttributeValue::Empty
+                } else {
+                    true
+                }
             }
         },
     }
 }
 
+impl GrowthBookAttribute {
+    fn aggregate_key(&self, parent_attribute: Option<&GrowthBookAttribute>) -> Self {
+        let key = parent_attribute.map(|parent| format!("{}.{}", parent.key, self.key)).unwrap_or(self.key.clone());
+        GrowthBookAttribute {
+            key,
+            value: self.value.clone(),
+        }
+    }
+}
+
 fn in_condition(
-    parent_key: Option<&GrowthBookAttribute>,
+    parent_attribute: Option<&GrowthBookAttribute>,
     feature_attribute: &GrowthBookAttribute,
     user_attributes: &[GrowthBookAttribute],
 ) -> bool {
     let a = if let Some(user_value) =
-        user_attributes.find_value(&parent_key.unwrap_or(feature_attribute).key)
+        user_attributes.find_value(&parent_attribute.unwrap_or(feature_attribute).key)
     {
         match &feature_attribute.value {
             GrowthBookAttributeValue::Array(feature_array) => feature_array.iter().any(|feature_item| {
@@ -76,45 +124,61 @@ fn in_condition(
                     it => feature_item.to_string() == it.to_string(),
                 }
             }),
-            it => {
-                match &user_value {
-                    GrowthBookAttributeValue::Array(user_array) => {
-                        user_array.iter().any(|user_item| it.to_string() == user_item.to_string())
-                    }
-                    GrowthBookAttributeValue::Empty => false,
-                    it => it.to_string() == it.to_string(),
-                }
-            },
+            _ => false,
         }
     } else {
-        true
+        false
     };
     println!("in_condition={a}");
     a
 }
 
 fn nin_condition(
-    parent_key: Option<&GrowthBookAttribute>,
+    parent_attribute: Option<&GrowthBookAttribute>,
     feature_attribute: &GrowthBookAttribute,
     user_attributes: &[GrowthBookAttribute],
 ) -> bool {
-    let a = !in_condition(parent_key, feature_attribute, user_attributes);
+    let a = if let Some(user_value) =
+        user_attributes.find_value(&parent_attribute.unwrap_or(feature_attribute).key)
+    {
+        match &feature_attribute.value {
+            GrowthBookAttributeValue::Array(feature_array) => feature_array.iter().all(|feature_item| {
+                !match &user_value {
+                    GrowthBookAttributeValue::Array(user_array) => {
+                        user_array.iter().any(|user_item| feature_item.to_string() == user_item.to_string())
+                    }
+                    GrowthBookAttributeValue::Empty => false,
+                    it => feature_item.to_string() == it.to_string(),
+                }
+            }),
+            _ => false,
+        }
+    } else {
+        false
+    };
     println!("nin_condition={a}");
     a
 }
 
 fn or_condition(
-    _parent_key: Option<&GrowthBookAttribute>,
+    _parent_attribute: Option<&GrowthBookAttribute>,
     feature_attribute: &GrowthBookAttribute,
     user_attributes: &[GrowthBookAttribute],
 ) -> bool {
     let a = match &feature_attribute.value {
-        GrowthBookAttributeValue::Array(it) => it.iter().any(|next_value| match next_value {
-            GrowthBookAttributeValue::Object(feature_value) => feature_value
-                .iter()
-                .all(|next_attribute| is_on(None, next_attribute, user_attributes)),
-            _ => false,
-        }),
+        GrowthBookAttributeValue::Array(it) => {
+            if it.is_empty() {
+                true
+            } else {
+                it.iter().any(|next_value| match next_value {
+                    GrowthBookAttributeValue::Object(feature_value) => feature_value
+                        .iter()
+                        .all(|next_attribute| is_on(None, next_attribute, user_attributes, false)),
+                    _ => false,
+                })
+            }
+        },
+        GrowthBookAttributeValue::Empty => true,
         _ => false,
     };
     println!("or_condition={a}");
@@ -122,14 +186,14 @@ fn or_condition(
 }
 
 fn not_condition(
-    parent_key: Option<&GrowthBookAttribute>,
+    parent_attribute: Option<&GrowthBookAttribute>,
     feature_attribute: &GrowthBookAttribute,
     user_attributes: &[GrowthBookAttribute],
 ) -> bool {
     let a = match &feature_attribute.value {
         GrowthBookAttributeValue::Object(it) => it
             .iter()
-            .all(|next| !is_on(parent_key, next, user_attributes)),
+            .all(|next| !is_on(parent_attribute, next, user_attributes, false)),
         _ => false,
     };
     println!("not_condition={a}");
@@ -137,7 +201,7 @@ fn not_condition(
 }
 
 fn and_condition(
-    _parent_key: Option<&GrowthBookAttribute>,
+    _parent_attribute: Option<&GrowthBookAttribute>,
     feature_attribute: &GrowthBookAttribute,
     user_attributes: &[GrowthBookAttribute],
 ) -> bool {
@@ -145,7 +209,7 @@ fn and_condition(
         GrowthBookAttributeValue::Array(it) => it.iter().all(|next_value| match next_value {
             GrowthBookAttributeValue::Object(feature_value) => feature_value
                 .iter()
-                .all(|next_attribute| is_on(None, next_attribute, user_attributes)),
+                .all(|next_attribute| is_on(None, next_attribute, user_attributes, false)),
             _ => false,
         }),
         _ => false,
@@ -154,13 +218,31 @@ fn and_condition(
     a
 }
 
+fn nor_condition(
+    _parent_attribute: Option<&GrowthBookAttribute>,
+    feature_attribute: &GrowthBookAttribute,
+    user_attributes: &[GrowthBookAttribute],
+) -> bool {
+    let a = match &feature_attribute.value {
+        GrowthBookAttributeValue::Array(it) => it.iter().all(|next_value| match next_value {
+            GrowthBookAttributeValue::Object(feature_value) => !feature_value
+                .iter()
+                .all(|next_attribute| is_on(None, next_attribute, user_attributes, false)),
+            _ => false,
+        }),
+        _ => false,
+    };
+    println!("nor_condition={a}");
+    a
+}
+
 fn ne_condition(
-    parent_key: Option<&GrowthBookAttribute>,
+    parent_attribute: Option<&GrowthBookAttribute>,
     feature_attribute: &GrowthBookAttribute,
     user_attributes: &[GrowthBookAttribute],
 ) -> bool {
     let a = if let Some(user_value) =
-        user_attributes.find_value(&parent_key.unwrap_or(feature_attribute).key)
+        user_attributes.find_value(&parent_attribute.unwrap_or(feature_attribute).key)
     {
         !match &user_value {
             GrowthBookAttributeValue::Array(it) => {
@@ -177,73 +259,118 @@ fn ne_condition(
 }
 
 fn gt_condition(
-    parent_key: Option<&GrowthBookAttribute>,
+    parent_attribute: Option<&GrowthBookAttribute>,
     feature_attribute: &GrowthBookAttribute,
     user_attributes: &[GrowthBookAttribute],
+    array_size: bool,
 ) -> bool {
-    let a = number_condition_evaluate(
-        parent_key,
-        feature_attribute,
-        user_attributes,
-        |feature_number, user_number| feature_number < user_number,
-    );
+    let a = if feature_attribute.value.is_number() {
+        number_condition_evaluate(
+            parent_attribute,
+            feature_attribute,
+            user_attributes,
+            array_size,
+            |feature_number, user_number| user_number.gt(feature_number),
+        )
+    } else {
+        string_condition_evaluate(
+            parent_attribute,
+            feature_attribute,
+            user_attributes,
+            |feature_string, user_string| user_string.gt(feature_string),
+        )
+    };
     println!("gt_condition={a}");
     a
 }
 
 fn gte_condition(
-    parent_key: Option<&GrowthBookAttribute>,
+    parent_attribute: Option<&GrowthBookAttribute>,
     feature_attribute: &GrowthBookAttribute,
     user_attributes: &[GrowthBookAttribute],
+    array_size: bool,
 ) -> bool {
-    let a = number_condition_evaluate(
-        parent_key,
-        feature_attribute,
-        user_attributes,
-        |feature_number, user_number| feature_number <= user_number,
-    );
+    let a = if feature_attribute.value.is_number() {
+        number_condition_evaluate(
+            parent_attribute,
+            feature_attribute,
+            user_attributes,
+            array_size,
+            |feature_number, user_number| user_number.ge(feature_number),
+        )
+    } else {
+        string_condition_evaluate(
+            parent_attribute,
+            feature_attribute,
+            user_attributes,
+            |feature_string, user_string| user_string.ge(feature_string),
+        )
+    };
     println!("gte_condition={a}");
     a
 }
 
 fn lt_condition(
-    parent_key: Option<&GrowthBookAttribute>,
+    parent_attribute: Option<&GrowthBookAttribute>,
     feature_attribute: &GrowthBookAttribute,
     user_attributes: &[GrowthBookAttribute],
+    array_size: bool,
 ) -> bool {
-    let a = number_condition_evaluate(
-        parent_key,
-        feature_attribute,
-        user_attributes,
-        |feature_number, user_number| feature_number > user_number,
-    );
+    let a = if feature_attribute.value.is_number() {
+        number_condition_evaluate(
+            parent_attribute,
+            feature_attribute,
+            user_attributes,
+            array_size,
+            |feature_number, user_number| user_number.lt(feature_number),
+        )
+    } else {
+        string_condition_evaluate(
+            parent_attribute,
+            feature_attribute,
+            user_attributes,
+            |feature_string, user_string| user_string.lt(feature_string),
+        )
+    };
     println!("lt_condition={a}");
     a
 }
 
 fn lte_condition(
-    parent_key: Option<&GrowthBookAttribute>,
+    parent_attribute: Option<&GrowthBookAttribute>,
     feature_attribute: &GrowthBookAttribute,
     user_attributes: &[GrowthBookAttribute],
+    array_size: bool,
 ) -> bool {
-    let a = number_condition_evaluate(
-        parent_key,
-        feature_attribute,
-        user_attributes,
-        |feature_number, user_number| feature_number >= user_number,
-    );
+    let a = if feature_attribute.value.is_number() {
+        number_condition_evaluate(
+            parent_attribute,
+            feature_attribute,
+            user_attributes,
+            array_size,
+            |feature_number, user_number| user_number.le(feature_number),
+        )
+    } else {
+        string_condition_evaluate(
+            parent_attribute,
+            feature_attribute,
+            user_attributes,
+            |feature_string, user_string| user_string.le(feature_string),
+        )
+    };
     println!("lte_condition={a}");
     a
 }
 
 fn number_condition_evaluate(
-    parent_key: Option<&GrowthBookAttribute>,
+    parent_attribute: Option<&GrowthBookAttribute>,
     feature_attribute: &GrowthBookAttribute,
     user_attributes: &[GrowthBookAttribute],
+    array_size: bool,
     condition: fn(&f64, &f64) -> bool,
 ) -> bool {
     let a = if let Some(user_value) =
-        user_attributes.find_value(&parent_key.unwrap_or(feature_attribute).key)
+        user_attributes.find_value(&parent_attribute.unwrap_or(feature_attribute).key)
     {
         let feature_number = if let GrowthBookAttributeValue::Int(it) = feature_attribute.value {
             it as f64
@@ -264,10 +391,14 @@ fn number_condition_evaluate(
         } else if let GrowthBookAttributeValue::Float(it) = user_value {
             vec![it]
         } else if let GrowthBookAttributeValue::Array(it) = user_value {
-            it.iter()
-                .filter(|item| item.is_number())
-                .map(|item| item.as_f64().expect("Failed to convert to f64"))
-                .collect()
+            if array_size {
+                vec![it.len() as f64]
+            } else {
+                it.iter()
+                    .filter(|item| item.is_number())
+                    .map(|item| item.as_f64().expect("Failed to convert to f64"))
+                    .collect()
+            }
         } else if let GrowthBookAttributeValue::String(string_number) = &user_value {
             if let Ok(it) = string_number.replace('.', "").parse::<f64>() {
                 vec![it]
@@ -286,36 +417,63 @@ fn number_condition_evaluate(
     a
 }
 
+fn string_condition_evaluate(
+    parent_attribute: Option<&GrowthBookAttribute>,
+    feature_attribute: &GrowthBookAttribute,
+    user_attributes: &[GrowthBookAttribute],
+    condition: fn(&str, &str) -> bool,
+) -> bool {
+    let a = if let Some(user_value) =
+        user_attributes.find_value(&parent_attribute.unwrap_or(feature_attribute).key)
+    {
+        let feature_value = feature_attribute.value.to_string();
+        match user_value {
+            GrowthBookAttributeValue::Array(it) => {
+                it.iter().any(|item| condition(&feature_value, &item.to_string()))
+            }
+            it => {
+                condition(&feature_value, &it.to_string())
+            }
+        }
+    } else {
+        true
+    };
+    println!("string_condition_evaluate={a}");
+    a
+}
+
 fn eq_condition(
-    parent_key: Option<&GrowthBookAttribute>,
+    parent_attribute: Option<&GrowthBookAttribute>,
     feature_attribute: &GrowthBookAttribute,
     user_attributes: &[GrowthBookAttribute],
 ) -> bool {
     let a = if let Some(user_value) =
-        user_attributes.find_value(&parent_key.unwrap_or(feature_attribute).key)
+        user_attributes.find_value(&parent_attribute.unwrap_or(feature_attribute).key)
     {
         match &user_value {
             GrowthBookAttributeValue::Array(it) => {
                 it.iter().any(|item| item == &feature_attribute.value)
             }
             GrowthBookAttributeValue::Empty => false,
-            it => it == &feature_attribute.value,
+            it => {
+                it.to_string() == feature_attribute.value.to_string()
+            },
         }
     } else {
-        true
+        false
     };
     println!("eq_condition={a}");
     a
 }
 
 fn exists_condition(
-    parent_key: Option<&GrowthBookAttribute>,
+    parent_attribute: Option<&GrowthBookAttribute>,
     feature_attribute: &GrowthBookAttribute,
     user_attributes: &[GrowthBookAttribute],
 ) -> bool {
     let a = if let GrowthBookAttributeValue::Bool(it) = feature_attribute.value {
         if user_attributes
-            .find_value(&parent_key.unwrap_or(feature_attribute).key)
+            .find_value(&parent_attribute.unwrap_or(feature_attribute).key)
             .is_some()
         {
             it
@@ -330,16 +488,21 @@ fn exists_condition(
 }
 
 fn regex_condition(
-    parent_key: Option<&GrowthBookAttribute>,
+    parent_attribute: Option<&GrowthBookAttribute>,
     feature_attribute: &GrowthBookAttribute,
     user_attributes: &[GrowthBookAttribute],
 ) -> bool {
-    let a = if let GrowthBookAttributeValue::String(it) = &feature_attribute.value {
-        if let Ok(regex) = Regex::new(it) {
+    let a = if let GrowthBookAttributeValue::String(feature_value) = &feature_attribute.value {
+        if let Ok(regex) = Regex::new(feature_value) {
             if let Some(user_value) =
-                user_attributes.find_value(&parent_key.unwrap_or(feature_attribute).key)
+                user_attributes.find_value(&parent_attribute.unwrap_or(feature_attribute).key)
             {
-                regex.is_match(&user_value.to_string())
+                match &user_value {
+                    GrowthBookAttributeValue::Array(it) => {
+                        it.iter().any(|item| regex.is_match(&item.to_string()))
+                    }
+                    it => regex.is_match(&it.to_string()),
+                }
             } else {
                 false
             }
@@ -353,14 +516,231 @@ fn regex_condition(
     a
 }
 
-fn elem_match_condition(
-    parent_key: Option<&GrowthBookAttribute>,
+fn type_condition(
+    parent_attribute: Option<&GrowthBookAttribute>,
+    feature_attribute: &GrowthBookAttribute,
+    user_attributes: &[GrowthBookAttribute],
+) -> bool {
+    let a = if let GrowthBookAttributeValue::String(feature_type) = &feature_attribute.value {
+        if let Some(user_value) = user_attributes.find_value(&parent_attribute.unwrap_or(feature_attribute).key) {
+            match user_value {
+                GrowthBookAttributeValue::String(_) => feature_type == "string",
+                GrowthBookAttributeValue::Int(_) => feature_type == "number",
+                GrowthBookAttributeValue::Float(_) => feature_type == "number",
+                GrowthBookAttributeValue::Bool(_) => feature_type == "boolean",
+                GrowthBookAttributeValue::Array(_) => feature_type == "array",
+                GrowthBookAttributeValue::Object(it) => {
+                    if it.is_empty() {
+                        feature_type == "null"
+                    } else {
+                        feature_type == "object"
+                    }
+                },
+                GrowthBookAttributeValue::Empty => feature_type == "null",
+            }
+        } else {
+            feature_type == "null"
+        }
+    } else {
+        false
+    };
+    println!("type_condition={a}");
+    a
+}
+
+fn size_condition(
+    parent_attribute: Option<&GrowthBookAttribute>,
     feature_attribute: &GrowthBookAttribute,
     user_attributes: &[GrowthBookAttribute],
 ) -> bool {
     let a = match &feature_attribute.value {
+        GrowthBookAttributeValue::Int(feature_value) => {
+            if let Some(user_value) = user_attributes.find_value(&parent_attribute.unwrap_or(feature_attribute).key) {
+                match user_value {
+                    GrowthBookAttributeValue::Array(it) => feature_value == &(it.len() as i64),
+                    _ => false,
+                }
+            } else {
+                false
+            }
+        }
+        GrowthBookAttributeValue::Object(feature_value) => {
+            feature_value.iter().all(|next| is_on(parent_attribute, next, user_attributes, true))
+        }
+        _ => false,
+    };
+    println!("size_condition={a}");
+    a
+}
+
+fn all_condition(
+    parent_attribute: Option<&GrowthBookAttribute>,
+    feature_attribute: &GrowthBookAttribute,
+    user_attributes: &[GrowthBookAttribute],
+) -> bool {
+    let a = match &feature_attribute.value {
+        GrowthBookAttributeValue::Array(feature_values) => {
+            if let Some(GrowthBookAttributeValue::Array(user_values)) = user_attributes.find_value(&parent_attribute.unwrap_or(feature_attribute).key) {
+                feature_values.iter().all(|feature_item| user_values.iter().any(|user_item| feature_item == user_item))
+            } else {
+                false
+            }
+        }
+        _ => false,
+    };
+    println!("size_condition={a}");
+    a
+}
+
+fn vgt_condition(
+    parent_attribute: Option<&GrowthBookAttribute>,
+    feature_attribute: &GrowthBookAttribute,
+    user_attributes: &[GrowthBookAttribute],
+) -> bool {
+    let a = version_condition_evaluate(
+        parent_attribute,
+        feature_attribute,
+        user_attributes,
+        |feature_version, user_version| user_version.gt(feature_version),
+    );
+    println!("vgt_condition={a}");
+    a
+}
+
+fn vgte_condition(
+    parent_attribute: Option<&GrowthBookAttribute>,
+    feature_attribute: &GrowthBookAttribute,
+    user_attributes: &[GrowthBookAttribute],
+) -> bool {
+    let a = version_condition_evaluate(
+        parent_attribute,
+        feature_attribute,
+        user_attributes,
+        |feature_version, user_version| user_version.ge(feature_version),
+    );
+    println!("vgte_condition={a}");
+    a
+}
+
+fn vlt_condition(
+    parent_attribute: Option<&GrowthBookAttribute>,
+    feature_attribute: &GrowthBookAttribute,
+    user_attributes: &[GrowthBookAttribute],
+) -> bool {
+    let a = version_condition_evaluate(
+        parent_attribute,
+        feature_attribute,
+        user_attributes,
+        |feature_version, user_version| user_version.lt(feature_version),
+    );
+    println!("vlt_condition={a}");
+    a
+}
+
+fn vlte_condition(
+    parent_attribute: Option<&GrowthBookAttribute>,
+    feature_attribute: &GrowthBookAttribute,
+    user_attributes: &[GrowthBookAttribute],
+) -> bool {
+    let a = version_condition_evaluate(
+        parent_attribute,
+        feature_attribute,
+        user_attributes,
+        |feature_version, user_version| user_version.le(feature_version),
+    );
+    println!("vlte_condition={a}");
+    a
+}
+
+fn veq_condition(
+    parent_attribute: Option<&GrowthBookAttribute>,
+    feature_attribute: &GrowthBookAttribute,
+    user_attributes: &[GrowthBookAttribute],
+) -> bool {
+    let a = version_condition_evaluate(
+        parent_attribute,
+        feature_attribute,
+        user_attributes,
+        |feature_version, user_version| user_version.eq(feature_version),
+    );
+    println!("veq_condition={a}");
+    a
+}
+
+fn vne_condition(
+    parent_attribute: Option<&GrowthBookAttribute>,
+    feature_attribute: &GrowthBookAttribute,
+    user_attributes: &[GrowthBookAttribute],
+) -> bool {
+    let a = version_condition_evaluate(
+        parent_attribute,
+        feature_attribute,
+        user_attributes,
+        |feature_version, user_version| user_version.ne(feature_version),
+    );
+    println!("vne_condition={a}");
+    a
+}
+
+fn version_condition_evaluate(
+    parent_attribute: Option<&GrowthBookAttribute>,
+    feature_attribute: &GrowthBookAttribute,
+    user_attributes: &[GrowthBookAttribute],
+    condition: fn(&str, &str) -> bool,
+) -> bool {
+    let a = if let Some(GrowthBookAttributeValue::String(user_version)) =
+        user_attributes.find_value(&parent_attribute.unwrap_or(feature_attribute).key)
+    {
+        let feature_version = feature_attribute.value.to_string();
+        println!("{}", &normalize_version(&feature_version));
+        println!("{}", &normalize_version(&user_version));
+        condition(&normalize_version(&feature_version), &normalize_version(&user_version))
+    } else {
+        true
+    };
+    println!("version_condition_evaluate={a}");
+    a
+}
+
+fn normalize_version(version: &str) -> String {
+    if let Ok(regex1) = Regex::new("(^v|\\+.*$)"){
+        if let Ok(regex2) = Regex::new("[-.]"){
+            if let Ok(regex3) = Regex::new("^\\d+"){
+                let string = regex1.replace_all(version, "").to_string();
+                let mut split = regex2.split(&string).filter(|item| !item.is_empty()).collect::<Vec<&str>>();
+                if split.len().clone() == 3 {
+                    split.push("~");
+                }
+                split.iter()
+                    .map(|part| {
+                        if regex3.is_match(part) {
+                            format!("{:0>5}", part)
+                        } else {
+                            part.to_string()
+                        }
+                    }).filter(|part| !part.is_empty())
+                    .reduce(|a, b| format!("{a}-{b}"))
+                    .unwrap_or(version.to_string())
+            } else {
+                version.to_string()
+            }
+        } else {
+            version.to_string()
+        }
+    } else {
+        version.to_string()
+    }
+}
+
+fn elem_match_condition(
+    parent_attribute: Option<&GrowthBookAttribute>,
+    feature_attribute: &GrowthBookAttribute,
+    user_attributes: &[GrowthBookAttribute],
+    array_size: bool,
+) -> bool {
+    let a = match &feature_attribute.value {
         GrowthBookAttributeValue::Object(it) => it.iter().any(|condition_attribute| {
-            is_on(parent_key, condition_attribute, user_attributes)
+            is_on(parent_attribute, condition_attribute, user_attributes, array_size)
         }),
         _ => false,
     };
@@ -388,7 +768,7 @@ mod test {
             println!("conditions={:?}", vec_condition);
             println!("attributes={:?}", vec_attributes);
             println!();
-            let enabled = is_on(None, &vec_condition[0], &vec_attributes);
+            let enabled = is_on(None, &vec_condition[0], &vec_attributes, false);
             println!("--------------------");
             if enabled != eval_condition.result {
                 panic!("EvalCondition failed: {}", eval_condition.name)
@@ -456,6 +836,662 @@ fn json() -> String {
   "specVersion": "0.6.0",
   "evalCondition": [
     [
+      "$not - pass",
+      {
+        "$not": {
+          "name": "hello"
+        }
+      },
+      {
+        "name": "world"
+      },
+      true
+    ],
+    [
+      "$not - fail",
+      {
+        "$not": {
+          "name": "hello"
+        }
+      },
+      {
+        "name": "hello"
+      },
+      false
+    ],
+    [
+      "$and/$or - all true",
+      {
+        "$and": [
+          {
+            "father.age": {
+              "$gt": 65
+            }
+          },
+          {
+            "$or": [
+              {
+                "bday": {
+                  "$regex": "-12-25$"
+                }
+              },
+              {
+                "name": "santa"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "santa",
+        "bday": "1980-12-25",
+        "father": {
+          "age": 70
+        }
+      },
+      true
+    ],
+    [
+      "$groups - match",
+      {
+        "$and": [
+          {
+            "$groups": {
+              "$elemMatch": { "$eq": "a" }
+            }
+          },
+          {
+            "$groups": {
+              "$elemMatch": { "$eq": "b" }
+            }
+          },
+          {
+            "$or": [
+              {
+                "$groups": {
+                  "$elemMatch": { "$eq": "c" }
+                }
+              },
+              {
+                "$groups": {
+                  "$elemMatch": { "$eq": "e" }
+                }
+              }
+            ]
+          },
+          {
+            "$not": {
+              "$groups": {
+                "$elemMatch": { "$eq": "f" }
+              }
+            }
+          },
+          {
+            "$not": {
+              "$groups": {
+                "$elemMatch": { "$eq": "g" }
+              }
+            }
+          }
+        ]
+      },
+      {
+        "$groups": ["a", "b", "c", "d"]
+      },
+      true
+    ],
+    [
+      "$groups - no match",
+      {
+        "$and": [
+          {
+            "$groups": {
+              "$elemMatch": { "$eq": "a" }
+            }
+          },
+          {
+            "$groups": {
+              "$elemMatch": { "$eq": "b" }
+            }
+          },
+          {
+            "$or": [
+              {
+                "$groups": {
+                  "$elemMatch": { "$eq": "c" }
+                }
+              },
+              {
+                "$groups": {
+                  "$elemMatch": { "$eq": "e" }
+                }
+              }
+            ]
+          },
+          {
+            "$not": {
+              "$groups": {
+                "$elemMatch": { "$eq": "d" }
+              }
+            }
+          },
+          {
+            "$not": {
+              "$groups": {
+                "$elemMatch": { "$eq": "g" }
+              }
+            }
+          }
+        ]
+      },
+      {
+        "$groups": ["a", "b", "c", "d"]
+      },
+      false
+    ],
+    [
+      "$and/$or - first or true",
+      {
+        "$and": [
+          {
+            "father.age": {
+              "$gt": 65
+            }
+          },
+          {
+            "$or": [
+              {
+                "bday": {
+                  "$regex": "-12-25$"
+                }
+              },
+              {
+                "name": "santa"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "santa",
+        "bday": "1980-12-20",
+        "father": {
+          "age": 70
+        }
+      },
+      true
+    ],
+    [
+      "$and/$or - second or true",
+      {
+        "$and": [
+          {
+            "father.age": {
+              "$gt": 65
+            }
+          },
+          {
+            "$or": [
+              {
+                "bday": {
+                  "$regex": "-12-25$"
+                }
+              },
+              {
+                "name": "santa"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "barbara",
+        "bday": "1980-12-25",
+        "father": {
+          "age": 70
+        }
+      },
+      true
+    ],
+    [
+      "$and/$or - first and false",
+      {
+        "$and": [
+          {
+            "father.age": {
+              "$gt": 65
+            }
+          },
+          {
+            "$or": [
+              {
+                "bday": {
+                  "$regex": "-12-25$"
+                }
+              },
+              {
+                "name": "santa"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "santa",
+        "bday": "1980-12-25",
+        "father": {
+          "age": 65
+        }
+      },
+      false
+    ],
+    [
+      "$and/$or - both or false",
+      {
+        "$and": [
+          {
+            "father.age": {
+              "$gt": 65
+            }
+          },
+          {
+            "$or": [
+              {
+                "bday": {
+                  "$regex": "-12-25$"
+                }
+              },
+              {
+                "name": "santa"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "barbara",
+        "bday": "1980-11-25",
+        "father": {
+          "age": 70
+        }
+      },
+      false
+    ],
+    [
+      "$and/$or - both and false",
+      {
+        "$and": [
+          {
+            "father.age": {
+              "$gt": 65
+            }
+          },
+          {
+            "$or": [
+              {
+                "bday": {
+                  "$regex": "-12-25$"
+                }
+              },
+              {
+                "name": "santa"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "john smith",
+        "bday": "1956-12-20",
+        "father": {
+          "age": 40
+        }
+      },
+      false
+    ],
+    [
+      "$exists - false pass",
+      {
+        "pets.dog.name": {
+          "$exists": false
+        }
+      },
+      {
+        "hello": "world"
+      },
+      true
+    ],
+    [
+      "$exists - false fail",
+      {
+        "pets.dog.name": {
+          "$exists": false
+        }
+      },
+      {
+        "pets": {
+          "dog": {
+            "name": "fido"
+          }
+        }
+      },
+      false
+    ],
+    [
+      "$exists - true fail",
+      {
+        "pets.dog.name": {
+          "$exists": true
+        }
+      },
+      {
+        "hello": "world"
+      },
+      false
+    ],
+    [
+      "$exists - true pass",
+      {
+        "pets.dog.name": {
+          "$exists": true
+        }
+      },
+      {
+        "pets": {
+          "dog": {
+            "name": "fido"
+          }
+        }
+      },
+      true
+    ],
+    [
+      "equals - multiple datatypes",
+      {
+        "str": "str",
+        "num": 10,
+        "flag": false
+      },
+      {
+        "str": "str",
+        "num": 10,
+        "flag": false
+      },
+      true
+    ],
+    [
+      "$in - pass",
+      {
+        "num": {
+          "$in": [1, 2, 3]
+        }
+      },
+      {
+        "num": 2
+      },
+      true
+    ],
+    [
+      "$in - fail",
+      {
+        "num": {
+          "$in": [1, 2, 3]
+        }
+      },
+      {
+        "num": 4
+      },
+      false
+    ],
+    [
+      "$in - not array",
+      {
+        "num": {
+          "$in": 1
+        }
+      },
+      {
+        "num": 1
+      },
+      false
+    ],
+    [
+      "$in - array pass 1",
+      {
+        "tags": {
+          "$in": ["a", "b"]
+        }
+      },
+      {
+        "tags": ["d", "e", "a"]
+      },
+      true
+    ],
+    [
+      "$in - array pass 2",
+      {
+        "tags": {
+          "$in": ["a", "b"]
+        }
+      },
+      {
+        "tags": ["d", "b", "f"]
+      },
+      true
+    ],
+    [
+      "$in - array pass 3",
+      {
+        "tags": {
+          "$in": ["a", "b"]
+        }
+      },
+      {
+        "tags": ["d", "b", "a"]
+      },
+      true
+    ],
+    [
+      "$in - array fail 1",
+      {
+        "tags": {
+          "$in": ["a", "b"]
+        }
+      },
+      {
+        "tags": ["d", "e", "f"]
+      },
+      false
+    ],
+    [
+      "$in - array fail 2",
+      {
+        "tags": {
+          "$in": ["a", "b"]
+        }
+      },
+      {
+        "tags": []
+      },
+      false
+    ],
+    [
+      "$nin - pass",
+      {
+        "num": {
+          "$nin": [1, 2, 3]
+        }
+      },
+      {
+        "num": 4
+      },
+      true
+    ],
+    [
+      "$nin - fail",
+      {
+        "num": {
+          "$nin": [1, 2, 3]
+        }
+      },
+      {
+        "num": 2
+      },
+      false
+    ],
+    [
+      "$nin - not array",
+      {
+        "num": {
+          "$nin": 1
+        }
+      },
+      {
+        "num": 1
+      },
+      false
+    ],
+    [
+      "$nin - array fail 1",
+      {
+        "tags": {
+          "$nin": ["a", "b"]
+        }
+      },
+      {
+        "tags": ["d", "e", "a"]
+      },
+      false
+    ],
+    [
+      "$nin - array fail 2",
+      {
+        "tags": {
+          "$nin": ["a", "b"]
+        }
+      },
+      {
+        "tags": ["d", "b", "f"]
+      },
+      false
+    ],
+    [
+      "$nin - array fail 3",
+      {
+        "tags": {
+          "$nin": ["a", "b"]
+        }
+      },
+      {
+        "tags": ["d", "b", "a"]
+      },
+      false
+    ],
+    [
+      "$nin - array pass 1",
+      {
+        "tags": {
+          "$nin": ["a", "b"]
+        }
+      },
+      {
+        "tags": ["d", "e", "f"]
+      },
+      true
+    ],
+    [
+      "$nin - array pass 2",
+      {
+        "tags": {
+          "$nin": ["a", "b"]
+        }
+      },
+      {
+        "tags": []
+      },
+      true
+    ],
+    [
+      "$elemMatch - pass - flat arrays",
+      {
+        "nums": {
+          "$elemMatch": {
+            "$gt": 10
+          }
+        }
+      },
+      {
+        "nums": [0, 5, -20, 15]
+      },
+      true
+    ],
+    [
+      "$elemMatch - fail - flat arrays",
+      {
+        "nums": {
+          "$elemMatch": {
+            "$gt": 10
+          }
+        }
+      },
+      {
+        "nums": [0, 5, -20, 8]
+      },
+      false
+    ],
+    [
+      "missing attribute - fail",
+      {
+        "pets.dog.name": {
+          "$in": ["fido"]
+        }
+      },
+      {
+        "hello": "world"
+      },
+      false
+    ],
+    [
+      "missing attribute with comparison operators",
+      {
+        "age": {
+          "$gt": -10,
+          "$lt": 10,
+          "$gte": -9,
+          "$lte": 9,
+          "$ne": 10
+        }
+      },
+      {},
+      true
+    ],
+    [
+      "comparing numbers and strings",
+      {
+        "n": {
+          "$gt": 5,
+          "$lt": 10
+        }
+      },
+      {
+        "n": "8"
+      },
+      true
+    ],
+    [
+      "comparing numbers and strings - v2",
+      {
+        "n": {
+          "$gt": "5",
+          "$lt": "10"
+        }
+      },
+      {
+        "n": 8
+      },
+      true
+    ],
+    [
       "empty $or - pass",
       {
         "$or": []
@@ -470,14 +1506,6 @@ fn json() -> String {
       {
         "$and": []
       },
-      {
-        "hello": "world"
-      },
-      true
-    ],
-    [
-      "empty - pass",
-      {},
       {
         "hello": "world"
       },

@@ -21,16 +21,22 @@ fn look_for_attribute(
     attribute_key: &str,
     user_attributes: &[GrowthBookAttribute],
 ) -> Option<GrowthBookAttribute> {
-    let key_part = attribute_key.split('.').collect::<Vec<&str>>()[split_index];
+    let split = attribute_key.split('.').collect::<Vec<&str>>();
+    let key_part = split[split_index];
     let option_attribute = user_attributes.iter().find(|item| item.key == key_part);
     if let Some(found_attribute) = option_attribute {
-        match found_attribute.value.clone() {
-            GrowthBookAttributeValue::Object(it) => {
-                look_for_attribute(split_index + 1, attribute_key, &it)
+        if split.len().gt(&(split_index + 1)) {
+            match found_attribute.value.clone() {
+                GrowthBookAttributeValue::Object(it) => {
+                    look_for_attribute(split_index + 1, attribute_key, &it)
+                }
+                GrowthBookAttributeValue::Empty => None,
+                _ => Some(found_attribute.clone()),
             }
-            GrowthBookAttributeValue::Empty => None,
-            _ => Some(found_attribute.clone()),
+        } else {
+            Some(found_attribute.clone())
         }
+
     } else {
         None
     }
