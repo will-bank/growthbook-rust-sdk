@@ -1,6 +1,6 @@
+use regex::Regex;
 use serde_json::{Map, Value};
 use std::fmt::{Display, Formatter};
-use regex::Regex;
 
 use crate::error::{GrowthbookError, GrowthbookErrorCode};
 

@@ -36,7 +36,6 @@ fn look_for_attribute(
         } else {
             Some(found_attribute.clone())
         }
-
     } else {
         None
     }
