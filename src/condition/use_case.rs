@@ -808,11 +808,11 @@ fn elem_match_condition(
 
 #[cfg(test)]
 mod test {
-    use crate::feature::condition::ConditionEnabledCheck;
     use crate::model_public::GrowthBookAttribute;
     use serde::Deserialize;
     use serde_json::Value;
     use std::fs;
+    use crate::condition::use_case::ConditionEnabledCheck;
 
     #[tokio::test]
     async fn evaluate_conditions() -> Result<(), Box<dyn std::error::Error>> {

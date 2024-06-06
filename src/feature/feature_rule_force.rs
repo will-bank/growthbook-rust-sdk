@@ -1,7 +1,7 @@
+use crate::condition::use_case::ConditionEnabledCheck;
 use serde_json::Value;
 
 use crate::dto::GrowthBookFeatureRuleForce;
-use crate::feature::condition::ConditionEnabledCheck;
 use crate::model_public::GrowthBookAttribute;
 
 impl GrowthBookFeatureRuleForce {

@@ -1,8 +1,8 @@
+use crate::condition::use_case::ConditionEnabledCheck;
 use serde_json::Value;
 
 use crate::dto::GrowthBookFeatureRuleRollout;
 use crate::extensions::FindGrowthBookAttribute;
-use crate::feature::condition::ConditionEnabledCheck;
 use crate::hash::{HashCode, HashCodeVersion};
 use crate::model_public::{GrowthBookAttribute, GrowthBookAttributeValue};
 
