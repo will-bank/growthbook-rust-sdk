@@ -14,9 +14,7 @@ mod test {
     #[test_context(TestContext)]
     #[rstest]
     #[tokio::test]
-    async fn should_return_enabled_default_when_fail_to_call_growthbook(
-        ctx: &mut TestContext,
-    ) -> Result<(), Box<dyn std::error::Error>> {
+    async fn should_return_enabled_default_when_fail_to_call_growthbook(ctx: &mut TestContext) -> Result<(), Box<dyn std::error::Error>> {
         let object_flag = ctx.growthbook.object_feature(
             "flag-not-exists",
             &json!({
@@ -38,9 +36,7 @@ mod test {
     #[rstest]
     #[tokio::test]
     async fn should_return_value(ctx: &mut TestContext) -> Result<(), Box<dyn std::error::Error>> {
-        let object_flag = ctx
-            .growthbook
-            .object_feature("object-flag", &json!({}), None)?;
+        let object_flag = ctx.growthbook.object_feature("object-flag", &json!({}), None)?;
 
         let value: ObjectValue = object_flag.value()?;
 

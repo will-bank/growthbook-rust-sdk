@@ -28,20 +28,21 @@ pub struct GrowthbookError {
 }
 
 impl GrowthbookError {
-    pub fn new(code: GrowthbookErrorCode, message: &str) -> Self {
-        GrowthbookError {
-            code,
-            message: String::from(message),
-        }
+    pub fn new(
+        code: GrowthbookErrorCode,
+        message: &str,
+    ) -> Self {
+        GrowthbookError { code, message: String::from(message) }
     }
 
-    pub fn invalid_response_value_type(flag: Feature, expected_type: &str) -> Self {
+    pub fn invalid_response_value_type(
+        flag: Feature,
+        expected_type: &str,
+    ) -> Self {
         let value = match flag {
             Feature::Boolean(it) => it.enabled.to_string(),
             Feature::String(it) => it.value,
-            Feature::Object(it) => it
-                .value::<String>()
-                .unwrap_or(String::from("'ObjectFlag unknown value'")),
+            Feature::Object(it) => it.value::<String>().unwrap_or(String::from("'ObjectFlag unknown value'")),
             Feature::Invalid() => String::from("'INVALID TYPE'"),
         };
 
@@ -53,15 +54,16 @@ impl GrowthbookError {
 }
 
 impl Display for GrowthbookError {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+    fn fmt(
+        &self,
+        f: &mut Formatter<'_>,
+    ) -> std::fmt::Result {
         write!(f, "{}", self.message)
     }
 }
 
 impl Error for GrowthbookError {
-    fn description(&self) -> &str {
-        &self.message
-    }
+    fn description(&self) -> &str { &self.message }
 }
 
 impl From<Box<dyn Error>> for GrowthbookError {

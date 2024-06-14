@@ -1,5 +1,6 @@
 use std::net::{SocketAddr, TcpListener};
 
+use growthbook_rust_sdk::client::GrowthBookClient;
 use rand::Rng;
 use reqwest::StatusCode;
 use serde_json::{json, Value};
@@ -7,8 +8,6 @@ use test_context::AsyncTestContext;
 use uuid::Uuid;
 use wiremock::matchers::{method, path};
 use wiremock::{Mock, MockServer, ResponseTemplate};
-
-use growthbook_rust_sdk::client::GrowthBookClient;
 
 pub struct TestContext {
     pub mock_server: MockServer,
@@ -22,19 +21,18 @@ impl AsyncTestContext for TestContext {
 
         all_cases(&mock_server, gb_sdk).await;
 
-        let growthbook =
-            GrowthBookClient::new(&mock_server.uri(), gb_sdk.to_string().as_str(), None, None)
-                .await
-                .expect("Failed to create growthbook gateway");
+        let growthbook = GrowthBookClient::new(&mock_server.uri(), gb_sdk.to_string().as_str(), None, None)
+            .await
+            .expect("Failed to create growthbook gateway");
 
-        TestContext {
-            mock_server,
-            growthbook,
-        }
+        TestContext { mock_server, growthbook }
     }
 }
 
-pub async fn all_cases(mock_server: &MockServer, sdk: Uuid) {
+pub async fn all_cases(
+    mock_server: &MockServer,
+    sdk: Uuid,
+) {
     let body = json!({
         "status": 200,
         "features": {

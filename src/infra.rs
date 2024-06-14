@@ -13,15 +13,10 @@ impl HttpClient {
         name: &str,
         timeout_duration: Duration,
     ) -> Result<ClientWithMiddleware, GrowthbookError> {
-        let client = ClientBuilder::new(
-            Client::builder()
-                .timeout(timeout_duration)
-                .build()
-                .map_err(GrowthbookError::from)?,
-        )
-        .with_init(Extension(OtelName(String::from(name).into())))
-        .with(TracingMiddleware::default())
-        .build();
+        let client = ClientBuilder::new(Client::builder().timeout(timeout_duration).build().map_err(GrowthbookError::from)?)
+            .with_init(Extension(OtelName(String::from(name).into())))
+            .with(TracingMiddleware::default())
+            .build();
         Ok(client)
     }
 }

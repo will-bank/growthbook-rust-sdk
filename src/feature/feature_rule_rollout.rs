@@ -1,6 +1,6 @@
-use crate::condition::use_case::ConditionEnabledCheck;
 use serde_json::Value;
 
+use crate::condition::use_case::ConditionsMatchesAttributes;
 use crate::dto::GrowthBookFeatureRuleRollout;
 use crate::extensions::FindGrowthBookAttribute;
 use crate::hash::{HashCode, HashCodeVersion};
@@ -14,7 +14,7 @@ impl GrowthBookFeatureRuleRollout {
     ) -> Option<Value> {
         if let Some(feature_attributes) = &self.conditions() {
             if let Some(user_attributes) = option_user_attributes {
-                if feature_attributes.is_on(user_attributes) {
+                if feature_attributes.matches(user_attributes) {
                     if let Some(user_value) = user_attributes.find_value(&self.hash_attribute) {
                         return self.check_coverage(&user_value, feature_name);
                     }
@@ -34,11 +34,7 @@ impl GrowthBookFeatureRuleRollout {
         value: &GrowthBookAttributeValue,
         feature_name: &str,
     ) -> Option<Value> {
-        if self.coverage.gt(&HashCode::hash_code(
-            &value.to_string(),
-            feature_name,
-            HashCodeVersion::V1,
-        )) {
+        if self.coverage.gt(&HashCode::hash_code(&value.to_string(), feature_name, HashCodeVersion::V1)) {
             Some(self.force.clone())
         } else {
             None

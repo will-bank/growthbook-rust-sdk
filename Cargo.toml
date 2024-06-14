@@ -12,6 +12,9 @@ fnv = { version = "1.0.7" }
 reqwest = { version = "0.12.4", default-features = false, features = ["json", "rustls-tls"] }
 reqwest-middleware = { version = "0.3.1" }
 
+strum = { version = "0.26.1" }
+strum_macros = { version = "0.26.1" }
+
 serde = { version = "1.0.196", features = ["derive"] }
 serde_json = { version = "1.0.113", features = ["preserve_order"] }
 

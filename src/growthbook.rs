@@ -19,18 +19,13 @@ impl GrowthBook {
         default_response: Value,
         user_attributes: Option<&Vec<GrowthBookAttribute>>,
     ) -> Feature {
-        let optional_feature = self
-            .features
-            .iter()
-            .find(|(key, _)| key.as_str() == flag_name);
+        let optional_feature = self.features.iter().find(|(key, _)| key.as_str() == flag_name);
 
         if let Some((_, feature)) = optional_feature {
             let (value, experiment_key) = feature.get_value(flag_name, user_attributes);
             value.create(experiment_key)
         } else {
-            info!(
-                        "[growthbook-sdk] Feature {flag_name} not found, returning default value={default_response}"
-                    );
+            info!("[growthbook-sdk] Feature {flag_name} not found, returning default value={default_response}");
             default_response.create(None)
         }
     }

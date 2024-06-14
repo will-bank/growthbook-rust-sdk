@@ -16,16 +16,9 @@ impl GrowthBookFeatureRuleExperiment {
                 let weights = self.weights();
                 if self.is_valid_experiment(&weights) {
                     for (index, percentage) in weights.iter().enumerate() {
-                        let user_weight_position = HashCode::hash_code(
-                            &user_value.to_string(),
-                            &self.seed(),
-                            HashCodeVersion::from(self.hash_version),
-                        );
+                        let user_weight_position = HashCode::hash_code(&user_value.to_string(), &self.seed(), HashCodeVersion::from(self.hash_version));
                         if percentage.in_range(&user_weight_position) {
-                            return Some((
-                                self.variations[index].clone(),
-                                self.meta[index].key.clone(),
-                            ));
+                            return Some((self.variations[index].clone(), self.meta[index].key.clone()));
                         }
                     }
                 }
@@ -35,7 +28,10 @@ impl GrowthBookFeatureRuleExperiment {
         None
     }
 
-    fn is_valid_experiment(&self, weights: &Vec<GrowthBookFeatureRuleExperimentRange>) -> bool {
+    fn is_valid_experiment(
+        &self,
+        weights: &[GrowthBookFeatureRuleExperimentRange],
+    ) -> bool {
         weights.len() == self.variations.len() && weights.len() == self.meta.len()
     }
 }

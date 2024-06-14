@@ -2,8 +2,9 @@ mod commons;
 
 #[cfg(test)]
 mod test {
-    use growthbook_rust_sdk::client::GrowthBookClient;
     use std::time::Duration;
+
+    use growthbook_rust_sdk::client::GrowthBookClient;
     use uuid::Uuid;
     use wiremock::matchers::{method, path};
     use wiremock::{Mock, MockServer, ResponseTemplate};
@@ -57,13 +58,7 @@ mod test {
         let _sdk_h = sdk_key.to_string();
         let update_interval = Duration::from_secs(1);
 
-        let client = GrowthBookClient::new(
-            api_url,
-            sdk_key.to_string().as_str(),
-            Some(update_interval),
-            None,
-        )
-        .await?;
+        let client = GrowthBookClient::new(api_url, sdk_key.to_string().as_str(), Some(update_interval), None).await?;
 
         let first_result = client.is_on("new_feature", false, None)?;
         assert!(!first_result.enabled);

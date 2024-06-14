@@ -1,8 +1,9 @@
 use std::collections::HashMap;
 
-use crate::model_public::{GrowthBookAttribute, GrowthBookAttributeValue};
 use serde::Deserialize;
 use serde_json::Value;
+
+use crate::model_public::{GrowthBookAttribute, GrowthBookAttributeValue};
 
 #[derive(Deserialize, Clone, Default)]
 #[serde(rename_all = "camelCase")]
@@ -66,33 +67,31 @@ pub struct GrowthBookFeatureRuleExperimentRange {
 }
 
 impl GrowthBookFeatureRuleRollout {
-    pub fn conditions(&self) -> Option<Vec<GrowthBookAttribute>> {
-        option_map_to_attributes(self.condition.clone())
-    }
+    pub fn conditions(&self) -> Option<Vec<GrowthBookAttribute>> { option_map_to_attributes(self.condition.clone()) }
 }
 
 impl GrowthBookFeatureRuleForce {
-    pub fn conditions(&self) -> Option<Vec<GrowthBookAttribute>> {
-        option_map_to_attributes(self.condition.clone())
-    }
+    pub fn conditions(&self) -> Option<Vec<GrowthBookAttribute>> { option_map_to_attributes(self.condition.clone()) }
 }
 
 impl GrowthBookFeatureRuleExperimentRange {
-    fn new(start: f32, end: f32) -> Self {
+    fn new(
+        start: f32,
+        end: f32,
+    ) -> Self {
         Self { start, end }
     }
 
-    pub fn in_range(&self, value: &f32) -> bool {
+    pub fn in_range(
+        &self,
+        value: &f32,
+    ) -> bool {
         value >= &self.start && value <= &self.end
     }
 }
 
 impl GrowthBookFeatureRuleExperiment {
-    pub fn seed(&self) -> String {
-        self.seed
-            .clone()
-            .unwrap_or(self.key.clone().unwrap_or(String::from("default")))
-    }
+    pub fn seed(&self) -> String { self.seed.clone().unwrap_or(self.key.clone().unwrap_or(String::from("default"))) }
 
     pub fn weights(&self) -> Vec<GrowthBookFeatureRuleExperimentRange> {
         let clamped_coverage = self.clamped_coverage();
@@ -135,20 +134,11 @@ impl GrowthBookFeatureRuleExperiment {
                 } else {
                     value
                 }
-            }
+            },
         }
     }
 }
 
-pub fn option_map_to_attributes(
-    option_map: Option<HashMap<String, Value>>,
-) -> Option<Vec<GrowthBookAttribute>> {
-    option_map.map(|conditions| {
-        conditions
-            .iter()
-            .map(|(k, v)| {
-                GrowthBookAttribute::new(k.clone(), GrowthBookAttributeValue::from(v.clone()))
-            })
-            .collect()
-    })
+pub fn option_map_to_attributes(option_map: Option<HashMap<String, Value>>) -> Option<Vec<GrowthBookAttribute>> {
+    option_map.map(|conditions| conditions.iter().map(|(k, v)| GrowthBookAttribute::new(k.clone(), GrowthBookAttributeValue::from(v.clone()))).collect())
 }

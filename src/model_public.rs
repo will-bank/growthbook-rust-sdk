@@ -1,6 +1,7 @@
+use std::fmt::{Display, Formatter};
+
 use regex::Regex;
 use serde_json::{Map, Value};
-use std::fmt::{Display, Formatter};
 
 use crate::error::{GrowthbookError, GrowthbookErrorCode};
 
@@ -22,7 +23,10 @@ pub enum GrowthBookAttributeValue {
 }
 
 impl GrowthBookAttribute {
-    pub fn new(key: String, value: GrowthBookAttributeValue) -> Self {
+    pub fn new(
+        key: String,
+        value: GrowthBookAttributeValue,
+    ) -> Self {
         GrowthBookAttribute { key, value }
     }
 
@@ -55,9 +59,7 @@ impl GrowthBookAttributeValue {
             false
         }
     }
-    pub fn as_f64(&self) -> Option<f64> {
-        self.to_string().replace('.', "").parse::<f64>().ok()
-    }
+    pub fn as_f64(&self) -> Option<f64> { self.to_string().replace('.', "").parse::<f64>().ok() }
 }
 
 impl From<Value> for GrowthBookAttributeValue {
@@ -71,21 +73,14 @@ impl From<Value> for GrowthBookAttributeValue {
         } else if value.is_f64() {
             GrowthBookAttributeValue::Float(value.as_f64().unwrap_or_default())
         } else if value.is_array() {
-            let vec: Vec<GrowthBookAttributeValue> = value
-                .as_array()
-                .unwrap_or(&vec![])
-                .iter()
-                .map(|item| GrowthBookAttributeValue::from(item.clone()))
-                .collect();
+            let vec: Vec<GrowthBookAttributeValue> = value.as_array().unwrap_or(&vec![]).iter().map(|item| GrowthBookAttributeValue::from(item.clone())).collect();
             GrowthBookAttributeValue::Array(vec)
         } else {
             let objects: Vec<_> = value
                 .as_object()
                 .unwrap_or(&Map::new())
                 .iter()
-                .map(|(k, v)| {
-                    GrowthBookAttribute::new(k.clone(), GrowthBookAttributeValue::from(v.clone()))
-                })
+                .map(|(k, v)| GrowthBookAttribute::new(k.clone(), GrowthBookAttributeValue::from(v.clone())))
                 .collect();
 
             if objects.is_empty() {
@@ -98,15 +93,14 @@ impl From<Value> for GrowthBookAttributeValue {
 }
 
 impl Display for GrowthBookAttributeValue {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+    fn fmt(
+        &self,
+        f: &mut Formatter<'_>,
+    ) -> std::fmt::Result {
         let message = match self {
             GrowthBookAttributeValue::Empty => String::new(),
-            GrowthBookAttributeValue::Array(it) => it
-                .iter()
-                .fold(String::new(), |acc, value| format!("{acc}{}", value)),
-            GrowthBookAttributeValue::Object(it) => it
-                .iter()
-                .fold(String::new(), |acc, att| format!("{acc}{}", att.value)),
+            GrowthBookAttributeValue::Array(it) => it.iter().fold(String::new(), |acc, value| format!("{acc}{}", value)),
+            GrowthBookAttributeValue::Object(it) => it.iter().fold(String::new(), |acc, att| format!("{acc}{}", att.value)),
             GrowthBookAttributeValue::String(it) => it.clone(),
             GrowthBookAttributeValue::Int(it) => it.to_string(),
             GrowthBookAttributeValue::Float(it) => it.to_string(),

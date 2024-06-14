@@ -1,5 +1,6 @@
-use fnv::FnvHasher;
 use std::hash::{Hash, Hasher};
+
+use fnv::FnvHasher;
 
 pub enum HashCodeVersion {
     V1,
@@ -27,14 +28,21 @@ impl From<Option<i64>> for HashCodeVersion {
 pub struct HashCode;
 
 impl HashCode {
-    pub fn hash_code(input: &str, seed: &str, version: HashCodeVersion) -> f32 {
+    pub fn hash_code(
+        input: &str,
+        seed: &str,
+        version: HashCodeVersion,
+    ) -> f32 {
         match version {
             HashCodeVersion::V1 => Self::hash_v1(input, seed),
             HashCodeVersion::V2 => Self::hash_v2(input, seed),
         }
     }
 
-    fn hash_v1(input: &str, seed: &str) -> f32 {
+    fn hash_v1(
+        input: &str,
+        seed: &str,
+    ) -> f32 {
         let concatenated = format!("{}{}", input, seed);
 
         let mut hasher = FnvHasher::default();
@@ -47,7 +55,10 @@ impl HashCode {
         remainder as f32 / 1000.0
     }
 
-    fn hash_v2(input: &str, seed: &str) -> f32 {
+    fn hash_v2(
+        input: &str,
+        seed: &str,
+    ) -> f32 {
         let concatenated = format!("{}{}", seed, input);
         let first = Self::fnv1a_32(concatenated.as_bytes());
 
@@ -73,22 +84,14 @@ mod test {
 
     #[test]
     fn hash_v1() -> Result<(), Box<dyn std::error::Error>> {
-        let hash_code = HashCode::hash_code(
-            "018fcf36-d39b-705c-a800-dc8bdc5964be",
-            "seed",
-            HashCodeVersion::V1,
-        );
+        let hash_code = HashCode::hash_code("018fcf36-d39b-705c-a800-dc8bdc5964be", "seed", HashCodeVersion::V1);
         assert_eq!(0.137, hash_code);
         Ok(())
     }
 
     #[test]
     fn hash_v2() -> Result<(), Box<dyn std::error::Error>> {
-        let hash_code = HashCode::hash_code(
-            "018fcf36-d39b-705c-a800-dc8bdc5964be",
-            "seed",
-            HashCodeVersion::V2,
-        );
+        let hash_code = HashCode::hash_code("018fcf36-d39b-705c-a800-dc8bdc5964be", "seed", HashCodeVersion::V2);
         assert_eq!(0.1382, hash_code);
         Ok(())
     }

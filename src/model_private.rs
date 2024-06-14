@@ -11,7 +11,10 @@ pub enum Feature {
 }
 
 pub trait FeatureCreator {
-    fn create(&self, experiment_key: Option<String>) -> Feature;
+    fn create(
+        &self,
+        experiment_key: Option<String>,
+    ) -> Feature;
 }
 
 pub struct BooleanFeature {
@@ -30,7 +33,10 @@ pub struct ObjectFeature {
 }
 
 impl FeatureCreator for Value {
-    fn create(&self, experiment_key: Option<String>) -> Feature {
+    fn create(
+        &self,
+        experiment_key: Option<String>,
+    ) -> Feature {
         if self.is_boolean() {
             Feature::Boolean(BooleanFeature::new(self, experiment_key))
         } else if self.is_string() {
@@ -44,7 +50,10 @@ impl FeatureCreator for Value {
 }
 
 impl BooleanFeature {
-    fn new(value: &Value, experiment_key: Option<String>) -> Self {
+    fn new(
+        value: &Value,
+        experiment_key: Option<String>,
+    ) -> Self {
         Self {
             enabled: value.as_bool().unwrap_or_default(),
             experiment_key,
@@ -53,7 +62,10 @@ impl BooleanFeature {
 }
 
 impl StringFeature {
-    fn new(value: &Value, experiment_key: Option<String>) -> Self {
+    fn new(
+        value: &Value,
+        experiment_key: Option<String>,
+    ) -> Self {
         Self {
             value: String::from(value.as_str().unwrap_or_default()),
             experiment_key,
@@ -62,11 +74,11 @@ impl StringFeature {
 }
 
 impl ObjectFeature {
-    fn new(value: &Value, experiment_key: Option<String>) -> Self {
-        Self {
-            value: value.clone(),
-            experiment_key,
-        }
+    fn new(
+        value: &Value,
+        experiment_key: Option<String>,
+    ) -> Self {
+        Self { value: value.clone(), experiment_key }
     }
 
     pub fn value<T>(&self) -> Result<T, GrowthbookError>

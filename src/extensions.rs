@@ -1,17 +1,26 @@
 use crate::model_public::{GrowthBookAttribute, GrowthBookAttributeValue};
 
 pub trait FindGrowthBookAttribute {
-    fn find_value(&self, attribute_key: &str) -> Option<GrowthBookAttributeValue>;
+    fn find_value(
+        &self,
+        attribute_key: &str,
+    ) -> Option<GrowthBookAttributeValue>;
 }
 
 impl FindGrowthBookAttribute for Vec<GrowthBookAttribute> {
-    fn find_value(&self, attribute_key: &str) -> Option<GrowthBookAttributeValue> {
+    fn find_value(
+        &self,
+        attribute_key: &str,
+    ) -> Option<GrowthBookAttributeValue> {
         look_for_attribute(0, attribute_key, self).map(|it| it.value)
     }
 }
 
 impl FindGrowthBookAttribute for &[GrowthBookAttribute] {
-    fn find_value(&self, attribute_key: &str) -> Option<GrowthBookAttributeValue> {
+    fn find_value(
+        &self,
+        attribute_key: &str,
+    ) -> Option<GrowthBookAttributeValue> {
         look_for_attribute(0, attribute_key, self).map(|it| it.value)
     }
 }
@@ -27,9 +36,7 @@ fn look_for_attribute(
     if let Some(found_attribute) = option_attribute {
         if split.len().gt(&(split_index + 1)) {
             match found_attribute.value.clone() {
-                GrowthBookAttributeValue::Object(it) => {
-                    look_for_attribute(split_index + 1, attribute_key, &it)
-                }
+                GrowthBookAttributeValue::Object(it) => look_for_attribute(split_index + 1, attribute_key, &it),
                 GrowthBookAttributeValue::Empty => None,
                 _ => Some(found_attribute.clone()),
             }
