@@ -29,7 +29,7 @@ impl Range {
         &self,
         value: &f32,
     ) -> bool {
-        value >= &self.start && value <= &self.end
+        value >= &self.start && value < &self.end
     }
 }
 
