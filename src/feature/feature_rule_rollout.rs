@@ -34,7 +34,7 @@ impl GrowthBookFeatureRuleRollout {
         value: &GrowthBookAttributeValue,
         feature_name: &str,
     ) -> Option<Value> {
-        if self.coverage.gt(&HashCode::hash_code(&value.to_string(), feature_name, HashCodeVersion::V1)) {
+        if self.coverage.gt(&HashCode::hash_code(&value.to_string(), feature_name, HashCodeVersion::V1).unwrap_or(-1.0)) {
             Some(self.force.clone())
         } else {
             None

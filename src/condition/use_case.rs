@@ -168,7 +168,7 @@ mod test {
         let cases = Cases::new();
 
         for value in cases.eval_condition {
-            let eval_condition = value_to_eval_condition(value);
+            let eval_condition = EvalCondition::new(value);
             let vec_condition = &GrowthBookAttribute::from(eval_condition.condition).expect("Failed to create attributes");
             let vec_attributes = GrowthBookAttribute::from(eval_condition.attribute).expect("Failed to create attributes");
             let enabled = vec_condition.matches(&vec_attributes);
@@ -180,22 +180,10 @@ mod test {
         Ok(())
     }
 
-    fn value_to_eval_condition(value: EvalConditionValue) -> EvalCondition {
-        match value {
-            EvalConditionValue::Condition(condition) => EvalCondition::new(condition),
-        }
-    }
-
     #[derive(Deserialize, Clone)]
     #[serde(rename_all = "camelCase")]
     struct Cases {
-        eval_condition: Vec<EvalConditionValue>,
-    }
-
-    #[derive(Deserialize, Clone)]
-    #[serde(untagged)]
-    enum EvalConditionValue {
-        Condition(Value),
+        eval_condition: Vec<Value>,
     }
 
     pub struct EvalCondition {

@@ -74,7 +74,7 @@ mod test {
     #[tokio::test]
     async fn should_return_enabled_false_when_percentage_is_50_and_attribute_is_outside_range(ctx: &mut TestContext) -> Result<(), Box<dyn std::error::Error>> {
         let vec = GrowthBookAttribute::from(json!({
-            "any-id": "018fcf3b-99f1-76e3-80a5-6e220e1ce4f2",
+            "any-id": "01901d5f-fc5a-7dd4-9f60-7f0381d4ad33",
         }))
         .expect("Failed to create attributes");
 

@@ -7,7 +7,7 @@ edition = "2021"
 
 [dependencies]
 tokio = { version = "1.38.0", features = ["full"] }
-fnv = { version = "1.0.7" }
+hashers = { version = "1.0.1" }
 
 reqwest = { version = "0.12.4", default-features = false, features = ["json", "rustls-tls"] }
 reqwest-middleware = { version = "0.3.1" }

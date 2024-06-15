@@ -1,17 +1,19 @@
-use std::hash::{Hash, Hasher};
+use std::hash::Hasher;
 
-use fnv::FnvHasher;
+use hashers::fnv::FNV1aHasher32;
 
 pub enum HashCodeVersion {
     V1,
     V2,
+    Invalid,
 }
 
 impl From<i64> for HashCodeVersion {
     fn from(value: i64) -> Self {
         match value {
+            1 => Self::V1,
             2 => Self::V2,
-            _ => Self::V1,
+            _ => Self::Invalid,
         }
     }
 }
@@ -32,10 +34,11 @@ impl HashCode {
         input: &str,
         seed: &str,
         version: HashCodeVersion,
-    ) -> f32 {
+    ) -> Option<f32> {
         match version {
-            HashCodeVersion::V1 => Self::hash_v1(input, seed),
-            HashCodeVersion::V2 => Self::hash_v2(input, seed),
+            HashCodeVersion::V1 => Some(Self::hash_v1(input, seed)),
+            HashCodeVersion::V2 => Some(Self::hash_v2(input, seed)),
+            _ => None,
         }
     }
 
@@ -44,14 +47,8 @@ impl HashCode {
         seed: &str,
     ) -> f32 {
         let concatenated = format!("{}{}", input, seed);
-
-        let mut hasher = FnvHasher::default();
-        concatenated.hash(&mut hasher);
-        let hash_value = hasher.finish();
-
-        let thousand = 1000;
-        let remainder = hash_value % thousand;
-
+        let hash_value = Self::fnv1a_32(concatenated.as_bytes());
+        let remainder = hash_value % 1000;
         remainder as f32 / 1000.0
     }
 
@@ -65,14 +62,13 @@ impl HashCode {
         let first_as_string = format!("{}", first);
         let second = Self::fnv1a_32(first_as_string.as_bytes());
 
-        let ten_thousand = 10000;
-        let remainder = (second as u64) % ten_thousand;
+        let remainder = (second as u64) % 10000;
 
         remainder as f32 / 10000.0
     }
 
     fn fnv1a_32(data: &[u8]) -> u32 {
-        let mut hasher = FnvHasher::default();
+        let mut hasher = FNV1aHasher32::default();
         hasher.write(data);
         hasher.finish() as u32
     }
@@ -80,19 +76,63 @@ impl HashCode {
 
 #[cfg(test)]
 mod test {
+    use std::fs;
+
+    use serde::Deserialize;
+    use serde_json::Value;
+
     use crate::hash::{HashCode, HashCodeVersion};
 
-    #[test]
-    fn hash_v1() -> Result<(), Box<dyn std::error::Error>> {
-        let hash_code = HashCode::hash_code("018fcf36-d39b-705c-a800-dc8bdc5964be", "seed", HashCodeVersion::V1);
-        assert_eq!(0.137, hash_code);
+    #[tokio::test]
+    async fn evaluate_hashes() -> Result<(), Box<dyn std::error::Error>> {
+        let cases = Cases::new();
+
+        for value in cases.hash {
+            let eval_hash = EvalHash::new(value);
+            let result = HashCode::hash_code(&eval_hash.value, &eval_hash.seed, HashCodeVersion::from(eval_hash.version));
+            if result != eval_hash.result {
+                panic!(
+                    "EvalHash failed: value={} seed={} version={} expected={:?} result={:?}",
+                    eval_hash.value, eval_hash.seed, eval_hash.version, eval_hash.result, result
+                )
+            }
+        }
+
         Ok(())
     }
 
-    #[test]
-    fn hash_v2() -> Result<(), Box<dyn std::error::Error>> {
-        let hash_code = HashCode::hash_code("018fcf36-d39b-705c-a800-dc8bdc5964be", "seed", HashCodeVersion::V2);
-        assert_eq!(0.1382, hash_code);
-        Ok(())
+    #[derive(Deserialize, Clone)]
+    #[serde(rename_all = "camelCase")]
+    struct Cases {
+        hash: Vec<Value>,
+    }
+
+    #[derive(Deserialize, Clone)]
+    #[serde(rename_all = "camelCase")]
+    pub struct EvalHash {
+        seed: String,
+        value: String,
+        version: i64,
+        result: Option<f32>,
+    }
+
+    impl EvalHash {
+        fn new(value: Value) -> Self {
+            let array = value.as_array().expect("Failed to convert to array");
+            Self {
+                seed: array[0].as_str().expect("Failed to convert do str").to_string(),
+                value: array[1].as_str().expect("Failed to convert do str").to_string(),
+                version: array[2].as_i64().expect("Failed to convert to i64"),
+                result: array[3].as_f64().map(|it| it as f32),
+            }
+        }
+    }
+
+    impl Cases {
+        pub fn new() -> Self {
+            let contents = fs::read_to_string("./tests/all_cases.json").expect("Should have been able to read the file");
+
+            serde_json::from_str(&contents).expect("Failed to create cases")
+        }
     }
 }

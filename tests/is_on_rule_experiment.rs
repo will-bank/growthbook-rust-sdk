@@ -26,7 +26,7 @@ mod test {
     #[tokio::test]
     async fn should_return_enabled_false_when_experiment_variant_is_disabled(ctx: &mut TestContext) -> Result<(), Box<dyn std::error::Error>> {
         let vec = GrowthBookAttribute::from(json!({
-            "any-id": "018fde79-e663-79d9-83f5-00d300c3c31e",
+            "any-id": "01901d5c-fb74-743d-a532-ed582d29a7e1",
         }))
         .expect("Failed to create attributes");
 
@@ -43,7 +43,7 @@ mod test {
     #[tokio::test]
     async fn should_return_enabled_true_when_experiment_variant_is_enabled(ctx: &mut TestContext) -> Result<(), Box<dyn std::error::Error>> {
         let vec = GrowthBookAttribute::from(json!({
-            "any-id": "018fde79-4e7d-713a-bc1b-92a64729bd47",
+            "any-id": "01901d5e-5b0e-75bf-92a3-7658d932634d",
         }))
         .expect("Failed to create attributes");
 

@@ -4,6 +4,7 @@ use serde::Deserialize;
 use serde_json::Value;
 
 use crate::model_public::{GrowthBookAttribute, GrowthBookAttributeValue};
+use crate::range::model::Range;
 
 #[derive(Deserialize, Clone, Default)]
 #[serde(rename_all = "camelCase")]
@@ -61,11 +62,6 @@ pub struct GrowthBookFeatureRuleExperiment {
     pub meta: Vec<GrowthBookFeatureRuleMeta>,
 }
 
-pub struct GrowthBookFeatureRuleExperimentRange {
-    pub start: f32,
-    pub end: f32,
-}
-
 impl GrowthBookFeatureRuleRollout {
     pub fn conditions(&self) -> Option<Vec<GrowthBookAttribute>> { option_map_to_attributes(self.condition.clone()) }
 }
@@ -74,69 +70,10 @@ impl GrowthBookFeatureRuleForce {
     pub fn conditions(&self) -> Option<Vec<GrowthBookAttribute>> { option_map_to_attributes(self.condition.clone()) }
 }
 
-impl GrowthBookFeatureRuleExperimentRange {
-    fn new(
-        start: f32,
-        end: f32,
-    ) -> Self {
-        Self { start, end }
-    }
-
-    pub fn in_range(
-        &self,
-        value: &f32,
-    ) -> bool {
-        value >= &self.start && value <= &self.end
-    }
-}
-
 impl GrowthBookFeatureRuleExperiment {
     pub fn seed(&self) -> String { self.seed.clone().unwrap_or(self.key.clone().unwrap_or(String::from("default"))) }
 
-    pub fn weights(&self) -> Vec<GrowthBookFeatureRuleExperimentRange> {
-        let clamped_coverage = self.clamped_coverage();
-        let adjusted_weights = self.adjusted_weights();
-
-        let mut acc = 0.0;
-        adjusted_weights
-            .iter()
-            .map(|weight| {
-                let start = acc;
-                acc += weight;
-                let end = start + clamped_coverage * weight;
-                GrowthBookFeatureRuleExperimentRange::new(start, end)
-            })
-            .collect()
-    }
-
-    fn adjusted_weights(&self) -> Vec<f32> {
-        let weights_sum: f32 = self.weights.iter().sum();
-        if !(0.99..=1.01).contains(&weights_sum) {
-            let weight = 1.0 / self.weights.len() as f32;
-            let mut vec = vec![];
-            for _ in 0..self.weights.len() {
-                vec.push(weight);
-            }
-            vec
-        } else {
-            self.weights.clone()
-        }
-    }
-
-    fn clamped_coverage(&self) -> f32 {
-        match self.coverage {
-            None => 1.0,
-            Some(value) => {
-                if value > 1.0 {
-                    1.0
-                } else if value < 0.0 {
-                    0.0
-                } else {
-                    value
-                }
-            },
-        }
-    }
+    pub fn weights(&self) -> Vec<Range> { Range::get_bucket_range(self.weights.len() as i64, &self.coverage, Some(self.weights.clone())) }
 }
 
 pub fn option_map_to_attributes(option_map: Option<HashMap<String, Value>>) -> Option<Vec<GrowthBookAttribute>> {
