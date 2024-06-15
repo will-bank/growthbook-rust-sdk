@@ -14,7 +14,7 @@ impl GrowthBookFeatureRuleExperiment {
     ) -> Option<(Value, String)> {
         if let Some(user_attributes) = option_user_attributes {
             if let Some(user_value) = user_attributes.find_value(&self.hash_attribute) {
-                let weights = self.weights();
+                let weights = self.ranges();
                 if self.is_valid_experiment(&weights) {
                     for (index, percentage) in weights.iter().enumerate() {
                         let user_weight_position = HashCode::hash_code(&user_value.to_string(), &self.seed(), HashCodeVersion::from(self.hash_version)).unwrap_or(-1.0);

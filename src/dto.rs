@@ -73,7 +73,7 @@ impl GrowthBookFeatureRuleForce {
 impl GrowthBookFeatureRuleExperiment {
     pub fn seed(&self) -> String { self.seed.clone().unwrap_or(self.key.clone().unwrap_or(String::from("default"))) }
 
-    pub fn weights(&self) -> Vec<Range> { Range::get_bucket_range(self.weights.len() as i64, &self.coverage, Some(self.weights.clone())) }
+    pub fn ranges(&self) -> Vec<Range> { Range::get_bucket_range(self.variations.len() as i64, &self.coverage, Some(self.weights.clone())) }
 }
 
 pub fn option_map_to_attributes(option_map: Option<HashMap<String, Value>>) -> Option<Vec<GrowthBookAttribute>> {

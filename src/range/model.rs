@@ -61,6 +61,10 @@ fn adjusted_weights(
         }
     }
 
+    get_equal_weights(variations)
+}
+
+fn get_equal_weights(variations: i64) -> Vec<f32> {
     let weight = 1.0 / variations as f32;
     let mut vec = vec![];
     for _ in 0..variations {
@@ -76,10 +80,10 @@ mod test {
     use serde::Deserialize;
     use serde_json::Value;
 
-    use crate::range::model::Range;
+    use crate::range::model::{get_equal_weights, Range};
 
     #[tokio::test]
-    async fn evaluate_conditions() -> Result<(), Box<dyn std::error::Error>> {
+    async fn evaluate_get_bucket_range() -> Result<(), Box<dyn std::error::Error>> {
         let cases = Cases::new();
 
         for value in cases.get_bucket_range {
@@ -95,10 +99,28 @@ mod test {
         Ok(())
     }
 
+    #[tokio::test]
+    async fn evaluate_get_equal_weights() -> Result<(), Box<dyn std::error::Error>> {
+        let cases = Cases::new();
+
+        for value in cases.get_equal_weights {
+            let eval_get_equal_weights = EvalGetEqualWeights::new(value);
+            let result = get_equal_weights(eval_get_equal_weights.variations);
+            for (index, weight) in result.iter().enumerate() {
+                let expected_weight = eval_get_equal_weights.weights[index];
+                if expected_weight.ne(weight) {
+                    panic!("EvalGetEqualWeights failed: expected_weight={expected_weight} weight={weight}")
+                }
+            }
+        }
+        Ok(())
+    }
+
     #[derive(Deserialize, Clone)]
     #[serde(rename_all = "camelCase")]
     struct Cases {
         get_bucket_range: Vec<Value>,
+        get_equal_weights: Vec<Value>,
     }
 
     pub struct EvalGetBucketRange {
@@ -130,6 +152,26 @@ mod test {
                             array[1].as_f64().expect("Failed to converto to f64 [2]") as f32,
                         )
                     })
+                    .collect(),
+            }
+        }
+    }
+
+    pub struct EvalGetEqualWeights {
+        variations: i64,
+        weights: Vec<f32>,
+    }
+
+    impl EvalGetEqualWeights {
+        fn new(value: Value) -> Self {
+            let array = value.as_array().expect("Failed to convert to array");
+            Self {
+                variations: array[0].as_i64().expect("Failed to convert to i64"),
+                weights: array[1]
+                    .as_array()
+                    .expect("Failed to convert to array")
+                    .iter()
+                    .map(|it| it.as_f64().expect("Failed to convert to f64") as f32)
                     .collect(),
             }
         }
