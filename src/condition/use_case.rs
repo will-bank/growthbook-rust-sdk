@@ -1,5 +1,10 @@
-use regex::Regex;
-
+use crate::condition::elem_match_comparison::ElemMatchComparison;
+use crate::condition::operator_condition::OperatorCondition;
+use crate::condition::order_comparison::OrderComparison;
+use crate::condition::regex_comparison::RegexComparison;
+use crate::condition::size_comparison::SizeComparison;
+use crate::condition::type_comparison::TypeComparison;
+use crate::condition::version_comparison::VersionComparison;
 use crate::extensions::FindGrowthBookAttribute;
 use crate::model_public::{GrowthBookAttribute, GrowthBookAttributeValue};
 
@@ -15,17 +20,7 @@ impl ConditionsMatchesAttributes for Vec<GrowthBookAttribute> {
         &self,
         user_attributes: &[GrowthBookAttribute],
     ) -> bool {
-        self.iter().all(|it| it.verify(None, user_attributes))
-    }
-}
-
-impl GrowthBookAttribute {
-    fn verify(
-        &self,
-        parent_attribute: Option<&GrowthBookAttribute>,
-        user_attributes: &[GrowthBookAttribute],
-    ) -> bool {
-        verify(parent_attribute, self, user_attributes, false)
+        self.iter().all(|it| verify(None, it, user_attributes, false))
     }
 }
 
@@ -36,77 +31,115 @@ fn verify(
     array_size: bool,
 ) -> bool {
     match feature_attribute.key.as_str() {
-        "$not" => not_condition(parent_attribute, feature_attribute, user_attributes),
-        "$ne" => ne_condition(parent_attribute, feature_attribute, user_attributes),
-        "$and" => and_condition(parent_attribute, feature_attribute, user_attributes),
-        "$nor" => nor_condition(parent_attribute, feature_attribute, user_attributes),
-        "$or" => or_condition(parent_attribute, feature_attribute, user_attributes),
-        "$in" => in_condition(parent_attribute, feature_attribute, user_attributes),
-        "$nin" => nin_condition(parent_attribute, feature_attribute, user_attributes),
-        "$gt" => gt_condition(parent_attribute, feature_attribute, user_attributes, array_size),
-        "$gte" => gte_condition(parent_attribute, feature_attribute, user_attributes, array_size),
-        "$lt" => lt_condition(parent_attribute, feature_attribute, user_attributes, array_size),
-        "$lte" => lte_condition(parent_attribute, feature_attribute, user_attributes, array_size),
-        "$eq" => eq_condition(parent_attribute, feature_attribute, user_attributes),
-        "$exists" => exists_condition(parent_attribute, feature_attribute, user_attributes),
-        "$regex" => regex_condition(parent_attribute, feature_attribute, user_attributes),
-        "$type" => type_condition(parent_attribute, feature_attribute, user_attributes),
-        "$size" => size_condition(parent_attribute, feature_attribute, user_attributes),
-        "$all" => all_condition(parent_attribute, feature_attribute, user_attributes),
-        "$vgt" => vgt_condition(parent_attribute, feature_attribute, user_attributes),
-        "$vgte" => vgte_condition(parent_attribute, feature_attribute, user_attributes),
-        "$vlt" => vlt_condition(parent_attribute, feature_attribute, user_attributes),
-        "$vlte" => vlte_condition(parent_attribute, feature_attribute, user_attributes),
-        "$veq" => veq_condition(parent_attribute, feature_attribute, user_attributes),
-        "$vne" => vne_condition(parent_attribute, feature_attribute, user_attributes),
-        "$elemMatch" => elem_match_condition(parent_attribute, feature_attribute, user_attributes, array_size),
-        _ => {
-            match &feature_attribute.value {
-                GrowthBookAttributeValue::String(_) => {
-                    if feature_attribute.key.starts_with('$') {
-                        false
-                    } else {
-                        eq_condition(parent_attribute, feature_attribute, user_attributes)
-                    }
-                },
-                GrowthBookAttributeValue::Array(feature_values) => {
-                    let a = if let Some(GrowthBookAttributeValue::Array(user_values)) = user_attributes.find_value(&parent_attribute.unwrap_or(feature_attribute).key) {
-                        if feature_values.len() == user_values.len() {
-                            feature_values.iter().enumerate().all(|(index, value)| value == &user_values[index])
-                        } else {
-                            false
-                        }
-                    } else {
-                        false
-                    };
-                    a
-                },
-                GrowthBookAttributeValue::Object(it) => {
-                    if it.is_empty() {
-                        user_attributes.find_value(&parent_attribute.unwrap_or(feature_attribute).key).is_none()
-                    } else {
-                        it.iter().all(|next| {
-                            let parent = feature_attribute.aggregate_key(parent_attribute);
-                            verify(Some(&parent), next, user_attributes, false)
-                        })
-                    }
-                },
-                GrowthBookAttributeValue::Empty => {
-                    if let Some(it) = user_attributes.find_value(&parent_attribute.unwrap_or(feature_attribute).key) {
-                        it == GrowthBookAttributeValue::Empty
-                    } else {
-                        true
-                    }
-                },
-                it => {
-                    if let Some(user_value) = user_attributes.find_value(&parent_attribute.unwrap_or(feature_attribute).key) {
-                        it == &user_value
-                    } else {
-                        false
-                    }
-                },
-            }
-        },
+        "$not" => OperatorCondition::not(parent_attribute, feature_attribute, user_attributes, verify),
+        "$ne" => OperatorCondition::ne(parent_attribute, feature_attribute, user_attributes, verify),
+        "$and" => OperatorCondition::and(parent_attribute, feature_attribute, user_attributes, verify),
+        "$nor" => OperatorCondition::nor(parent_attribute, feature_attribute, user_attributes, verify),
+        "$or" => OperatorCondition::or(parent_attribute, feature_attribute, user_attributes, verify),
+        "$in" => OperatorCondition::is_in(parent_attribute, feature_attribute, user_attributes, verify),
+        "$nin" => OperatorCondition::nin(parent_attribute, feature_attribute, user_attributes, verify),
+        "$gt" => OrderComparison::gt(parent_attribute, feature_attribute, user_attributes, array_size),
+        "$gte" => OrderComparison::gte(parent_attribute, feature_attribute, user_attributes, array_size),
+        "$lt" => OrderComparison::lt(parent_attribute, feature_attribute, user_attributes, array_size),
+        "$lte" => OrderComparison::lte(parent_attribute, feature_attribute, user_attributes, array_size),
+        "$eq" => OperatorCondition::eq(parent_attribute, feature_attribute, user_attributes, verify),
+        "$exists" => OperatorCondition::exists(parent_attribute, feature_attribute, user_attributes, verify),
+        "$regex" => RegexComparison::matches(parent_attribute, feature_attribute, user_attributes),
+        "$type" => TypeComparison::matches(parent_attribute, feature_attribute, user_attributes),
+        "$size" => SizeComparison::matches(parent_attribute, feature_attribute, user_attributes, verify),
+        "$all" => OperatorCondition::all(parent_attribute, feature_attribute, user_attributes, verify),
+        "$vgt" => VersionComparison::vgt(parent_attribute, feature_attribute, user_attributes),
+        "$vgte" => VersionComparison::vgte(parent_attribute, feature_attribute, user_attributes),
+        "$vlt" => VersionComparison::vlt(parent_attribute, feature_attribute, user_attributes),
+        "$vlte" => VersionComparison::vlte(parent_attribute, feature_attribute, user_attributes),
+        "$veq" => VersionComparison::veq(parent_attribute, feature_attribute, user_attributes),
+        "$vne" => VersionComparison::vne(parent_attribute, feature_attribute, user_attributes),
+        "$elemMatch" => ElemMatchComparison::matches(parent_attribute, feature_attribute, user_attributes, array_size, verify),
+        _ => non_operator_or_condition(parent_attribute, feature_attribute, user_attributes),
+    }
+}
+
+fn non_operator_or_condition(
+    parent_attribute: Option<&GrowthBookAttribute>,
+    feature_attribute: &GrowthBookAttribute,
+    user_attributes: &[GrowthBookAttribute],
+) -> bool {
+    match &feature_attribute.value {
+        GrowthBookAttributeValue::String(_) => string_non_operator(parent_attribute, feature_attribute, user_attributes),
+        GrowthBookAttributeValue::Array(feature_values) => array(&parent_attribute, &feature_attribute, user_attributes, feature_values),
+        GrowthBookAttributeValue::Object(it) => object(parent_attribute, feature_attribute, user_attributes, it),
+        GrowthBookAttributeValue::Empty => empty(&parent_attribute, &feature_attribute, user_attributes),
+        it => fallback(&parent_attribute, feature_attribute, user_attributes, it),
+    }
+}
+
+fn string_non_operator(
+    parent_attribute: Option<&GrowthBookAttribute>,
+    feature_attribute: &GrowthBookAttribute,
+    user_attributes: &[GrowthBookAttribute],
+) -> bool {
+    if feature_attribute.key.starts_with('$') {
+        false
+    } else {
+        OperatorCondition::eq(parent_attribute, feature_attribute, user_attributes, verify)
+    }
+}
+
+fn array(
+    parent_attribute: &Option<&GrowthBookAttribute>,
+    feature_attribute: &&GrowthBookAttribute,
+    user_attributes: &[GrowthBookAttribute],
+    feature_values: &[GrowthBookAttributeValue],
+) -> bool {
+    if let Some(GrowthBookAttributeValue::Array(user_values)) = user_attributes.find_value(&parent_attribute.unwrap_or(feature_attribute).key) {
+        if feature_values.len() == user_values.len() {
+            feature_values.iter().enumerate().all(|(index, value)| value == &user_values[index])
+        } else {
+            false
+        }
+    } else {
+        false
+    }
+}
+
+fn object(
+    parent_attribute: Option<&GrowthBookAttribute>,
+    feature_attribute: &GrowthBookAttribute,
+    user_attributes: &[GrowthBookAttribute],
+    it: &[GrowthBookAttribute],
+) -> bool {
+    if it.is_empty() {
+        user_attributes.find_value(&parent_attribute.unwrap_or(feature_attribute).key).is_none()
+    } else {
+        it.iter().all(|next| {
+            let parent = feature_attribute.aggregate_key(parent_attribute);
+            verify(Some(&parent), next, user_attributes, false)
+        })
+    }
+}
+
+fn empty(
+    parent_attribute: &Option<&GrowthBookAttribute>,
+    feature_attribute: &&GrowthBookAttribute,
+    user_attributes: &[GrowthBookAttribute],
+) -> bool {
+    if let Some(it) = user_attributes.find_value(&parent_attribute.unwrap_or(feature_attribute).key) {
+        it == GrowthBookAttributeValue::Empty
+    } else {
+        true
+    }
+}
+
+fn fallback(
+    parent_attribute: &Option<&GrowthBookAttribute>,
+    feature_attribute: &GrowthBookAttribute,
+    user_attributes: &[GrowthBookAttribute],
+    it: &GrowthBookAttributeValue,
+) -> bool {
+    if let Some(user_value) = user_attributes.find_value(&parent_attribute.unwrap_or(feature_attribute).key) {
+        it == &user_value
+    } else {
+        false
     }
 }
 
@@ -117,483 +150,6 @@ impl GrowthBookAttribute {
     ) -> Self {
         let key = parent_attribute.map(|parent| format!("{}.{}", parent.key, self.key)).unwrap_or(self.key.clone());
         GrowthBookAttribute { key, value: self.value.clone() }
-    }
-}
-
-fn in_condition(
-    parent_attribute: Option<&GrowthBookAttribute>,
-    feature_attribute: &GrowthBookAttribute,
-    user_attributes: &[GrowthBookAttribute],
-) -> bool {
-    if let Some(user_value) = user_attributes.find_value(&parent_attribute.unwrap_or(feature_attribute).key) {
-        match &feature_attribute.value {
-            GrowthBookAttributeValue::Array(feature_array) => {
-                feature_array.iter().any(|feature_item| {
-                    match &user_value {
-                        GrowthBookAttributeValue::Array(user_array) => user_array.iter().any(|user_item| feature_item.to_string() == user_item.to_string()),
-                        GrowthBookAttributeValue::Empty => false,
-                        it => feature_item.to_string() == it.to_string(),
-                    }
-                })
-            },
-            _ => false,
-        }
-    } else {
-        false
-    }
-}
-
-fn nin_condition(
-    parent_attribute: Option<&GrowthBookAttribute>,
-    feature_attribute: &GrowthBookAttribute,
-    user_attributes: &[GrowthBookAttribute],
-) -> bool {
-    if let Some(user_value) = user_attributes.find_value(&parent_attribute.unwrap_or(feature_attribute).key) {
-        match &feature_attribute.value {
-            GrowthBookAttributeValue::Array(feature_array) => {
-                feature_array.iter().all(|feature_item| {
-                    !match &user_value {
-                        GrowthBookAttributeValue::Array(user_array) => user_array.iter().any(|user_item| feature_item.to_string() == user_item.to_string()),
-                        GrowthBookAttributeValue::Empty => false,
-                        it => feature_item.to_string() == it.to_string(),
-                    }
-                })
-            },
-            _ => false,
-        }
-    } else {
-        false
-    }
-}
-
-fn or_condition(
-    _parent_attribute: Option<&GrowthBookAttribute>,
-    feature_attribute: &GrowthBookAttribute,
-    user_attributes: &[GrowthBookAttribute],
-) -> bool {
-    match &feature_attribute.value {
-        GrowthBookAttributeValue::Array(it) => {
-            if it.is_empty() {
-                true
-            } else {
-                it.iter().any(|next_value| {
-                    match next_value {
-                        GrowthBookAttributeValue::Object(feature_value) => feature_value.iter().all(|next_attribute| verify(None, next_attribute, user_attributes, false)),
-                        _ => false,
-                    }
-                })
-            }
-        },
-        GrowthBookAttributeValue::Empty => true,
-        _ => false,
-    }
-}
-
-fn not_condition(
-    parent_attribute: Option<&GrowthBookAttribute>,
-    feature_attribute: &GrowthBookAttribute,
-    user_attributes: &[GrowthBookAttribute],
-) -> bool {
-    match &feature_attribute.value {
-        GrowthBookAttributeValue::Object(it) => it.iter().all(|next| !verify(parent_attribute, next, user_attributes, false)),
-        _ => false,
-    }
-}
-
-fn and_condition(
-    _parent_attribute: Option<&GrowthBookAttribute>,
-    feature_attribute: &GrowthBookAttribute,
-    user_attributes: &[GrowthBookAttribute],
-) -> bool {
-    match &feature_attribute.value {
-        GrowthBookAttributeValue::Array(it) => {
-            it.iter().all(|next_value| {
-                match next_value {
-                    GrowthBookAttributeValue::Object(feature_value) => feature_value.iter().all(|next_attribute| verify(None, next_attribute, user_attributes, false)),
-                    _ => false,
-                }
-            })
-        },
-        _ => false,
-    }
-}
-
-fn nor_condition(
-    _parent_attribute: Option<&GrowthBookAttribute>,
-    feature_attribute: &GrowthBookAttribute,
-    user_attributes: &[GrowthBookAttribute],
-) -> bool {
-    match &feature_attribute.value {
-        GrowthBookAttributeValue::Array(it) => {
-            it.iter().all(|next_value| {
-                match next_value {
-                    GrowthBookAttributeValue::Object(feature_value) => !feature_value.iter().all(|next_attribute| verify(None, next_attribute, user_attributes, false)),
-                    _ => false,
-                }
-            })
-        },
-        _ => false,
-    }
-}
-
-fn ne_condition(
-    parent_attribute: Option<&GrowthBookAttribute>,
-    feature_attribute: &GrowthBookAttribute,
-    user_attributes: &[GrowthBookAttribute],
-) -> bool {
-    if let Some(user_value) = user_attributes.find_value(&parent_attribute.unwrap_or(feature_attribute).key) {
-        !match &user_value {
-            GrowthBookAttributeValue::Array(it) => it.iter().any(|item| item == &feature_attribute.value),
-            GrowthBookAttributeValue::Empty => true,
-            it => it == &feature_attribute.value,
-        }
-    } else {
-        true
-    }
-}
-
-fn gt_condition(
-    parent_attribute: Option<&GrowthBookAttribute>,
-    feature_attribute: &GrowthBookAttribute,
-    user_attributes: &[GrowthBookAttribute],
-    array_size: bool,
-) -> bool {
-    if feature_attribute.value.is_number() {
-        number_condition_evaluate(parent_attribute, feature_attribute, user_attributes, array_size, |feature_number, user_number| {
-            user_number.gt(feature_number)
-        })
-    } else {
-        string_condition_evaluate(parent_attribute, feature_attribute, user_attributes, |feature_string, user_string| user_string.gt(feature_string))
-    }
-}
-
-fn gte_condition(
-    parent_attribute: Option<&GrowthBookAttribute>,
-    feature_attribute: &GrowthBookAttribute,
-    user_attributes: &[GrowthBookAttribute],
-    array_size: bool,
-) -> bool {
-    if feature_attribute.value.is_number() {
-        number_condition_evaluate(parent_attribute, feature_attribute, user_attributes, array_size, |feature_number, user_number| {
-            user_number.ge(feature_number)
-        })
-    } else {
-        string_condition_evaluate(parent_attribute, feature_attribute, user_attributes, |feature_string, user_string| user_string.ge(feature_string))
-    }
-}
-
-fn lt_condition(
-    parent_attribute: Option<&GrowthBookAttribute>,
-    feature_attribute: &GrowthBookAttribute,
-    user_attributes: &[GrowthBookAttribute],
-    array_size: bool,
-) -> bool {
-    if feature_attribute.value.is_number() {
-        number_condition_evaluate(parent_attribute, feature_attribute, user_attributes, array_size, |feature_number, user_number| {
-            user_number.lt(feature_number)
-        })
-    } else {
-        string_condition_evaluate(parent_attribute, feature_attribute, user_attributes, |feature_string, user_string| user_string.lt(feature_string))
-    }
-}
-
-fn lte_condition(
-    parent_attribute: Option<&GrowthBookAttribute>,
-    feature_attribute: &GrowthBookAttribute,
-    user_attributes: &[GrowthBookAttribute],
-    array_size: bool,
-) -> bool {
-    if feature_attribute.value.is_number() {
-        number_condition_evaluate(parent_attribute, feature_attribute, user_attributes, array_size, |feature_number, user_number| {
-            user_number.le(feature_number)
-        })
-    } else {
-        string_condition_evaluate(parent_attribute, feature_attribute, user_attributes, |feature_string, user_string| user_string.le(feature_string))
-    }
-}
-
-fn number_condition_evaluate(
-    parent_attribute: Option<&GrowthBookAttribute>,
-    feature_attribute: &GrowthBookAttribute,
-    user_attributes: &[GrowthBookAttribute],
-    array_size: bool,
-    condition: fn(&f64, &f64) -> bool,
-) -> bool {
-    if let Some(user_value) = user_attributes.find_value(&parent_attribute.unwrap_or(feature_attribute).key) {
-        let feature_number = if let GrowthBookAttributeValue::Int(it) = feature_attribute.value {
-            it as f64
-        } else if let GrowthBookAttributeValue::Float(it) = feature_attribute.value {
-            it
-        } else if let GrowthBookAttributeValue::String(string_number) = &feature_attribute.value {
-            if let Ok(it) = string_number.replace('.', "").parse::<f64>() {
-                it
-            } else {
-                return false;
-            }
-        } else {
-            return false;
-        };
-
-        let user_numbers = if let GrowthBookAttributeValue::Int(it) = user_value {
-            vec![it as f64]
-        } else if let GrowthBookAttributeValue::Float(it) = user_value {
-            vec![it]
-        } else if let GrowthBookAttributeValue::Array(it) = user_value {
-            if array_size {
-                vec![it.len() as f64]
-            } else {
-                it.iter().filter(|item| item.is_number()).map(|item| item.as_f64().expect("Failed to convert to f64")).collect()
-            }
-        } else if let GrowthBookAttributeValue::String(string_number) = &user_value {
-            if let Ok(it) = string_number.replace('.', "").parse::<f64>() {
-                vec![it]
-            } else {
-                return false;
-            }
-        } else {
-            return false;
-        };
-
-        user_numbers.iter().any(|number| condition(&feature_number, number))
-    } else {
-        true
-    }
-}
-
-fn string_condition_evaluate(
-    parent_attribute: Option<&GrowthBookAttribute>,
-    feature_attribute: &GrowthBookAttribute,
-    user_attributes: &[GrowthBookAttribute],
-    condition: fn(&str, &str) -> bool,
-) -> bool {
-    if let Some(user_value) = user_attributes.find_value(&parent_attribute.unwrap_or(feature_attribute).key) {
-        let feature_value = feature_attribute.value.to_string();
-        match user_value {
-            GrowthBookAttributeValue::Array(it) => it.iter().any(|item| condition(&feature_value, &item.to_string())),
-            it => condition(&feature_value, &it.to_string()),
-        }
-    } else {
-        true
-    }
-}
-
-fn eq_condition(
-    parent_attribute: Option<&GrowthBookAttribute>,
-    feature_attribute: &GrowthBookAttribute,
-    user_attributes: &[GrowthBookAttribute],
-) -> bool {
-    if let Some(user_value) = user_attributes.find_value(&parent_attribute.unwrap_or(feature_attribute).key) {
-        match &user_value {
-            GrowthBookAttributeValue::Array(it) => it.iter().any(|item| item == &feature_attribute.value),
-            GrowthBookAttributeValue::Empty => false,
-            it => it.to_string() == feature_attribute.value.to_string(),
-        }
-    } else {
-        false
-    }
-}
-
-fn exists_condition(
-    parent_attribute: Option<&GrowthBookAttribute>,
-    feature_attribute: &GrowthBookAttribute,
-    user_attributes: &[GrowthBookAttribute],
-) -> bool {
-    if let GrowthBookAttributeValue::Bool(it) = feature_attribute.value {
-        if user_attributes.find_value(&parent_attribute.unwrap_or(feature_attribute).key).is_some() {
-            it
-        } else {
-            !it
-        }
-    } else {
-        true
-    }
-}
-
-fn regex_condition(
-    parent_attribute: Option<&GrowthBookAttribute>,
-    feature_attribute: &GrowthBookAttribute,
-    user_attributes: &[GrowthBookAttribute],
-) -> bool {
-    if let GrowthBookAttributeValue::String(feature_value) = &feature_attribute.value {
-        if let Ok(regex) = Regex::new(feature_value) {
-            if let Some(user_value) = user_attributes.find_value(&parent_attribute.unwrap_or(feature_attribute).key) {
-                match &user_value {
-                    GrowthBookAttributeValue::Array(it) => it.iter().any(|item| regex.is_match(&item.to_string())),
-                    it => regex.is_match(&it.to_string()),
-                }
-            } else {
-                false
-            }
-        } else {
-            false
-        }
-    } else {
-        true
-    }
-}
-
-fn type_condition(
-    parent_attribute: Option<&GrowthBookAttribute>,
-    feature_attribute: &GrowthBookAttribute,
-    user_attributes: &[GrowthBookAttribute],
-) -> bool {
-    if let GrowthBookAttributeValue::String(feature_type) = &feature_attribute.value {
-        if let Some(user_value) = user_attributes.find_value(&parent_attribute.unwrap_or(feature_attribute).key) {
-            match user_value {
-                GrowthBookAttributeValue::String(_) => feature_type == "string",
-                GrowthBookAttributeValue::Int(_) => feature_type == "number",
-                GrowthBookAttributeValue::Float(_) => feature_type == "number",
-                GrowthBookAttributeValue::Bool(_) => feature_type == "boolean",
-                GrowthBookAttributeValue::Array(_) => feature_type == "array",
-                GrowthBookAttributeValue::Object(it) => {
-                    if it.is_empty() {
-                        feature_type == "null"
-                    } else {
-                        feature_type == "object"
-                    }
-                },
-                GrowthBookAttributeValue::Empty => feature_type == "null",
-            }
-        } else {
-            feature_type == "null"
-        }
-    } else {
-        false
-    }
-}
-
-fn size_condition(
-    parent_attribute: Option<&GrowthBookAttribute>,
-    feature_attribute: &GrowthBookAttribute,
-    user_attributes: &[GrowthBookAttribute],
-) -> bool {
-    match &feature_attribute.value {
-        GrowthBookAttributeValue::Int(feature_value) => {
-            if let Some(GrowthBookAttributeValue::Array(user_value)) = user_attributes.find_value(&parent_attribute.unwrap_or(feature_attribute).key) {
-                feature_value == &(user_value.len() as i64)
-            } else {
-                false
-            }
-        },
-        GrowthBookAttributeValue::Object(feature_value) => feature_value.iter().all(|next| verify(parent_attribute, next, user_attributes, true)),
-        _ => false,
-    }
-}
-
-fn all_condition(
-    parent_attribute: Option<&GrowthBookAttribute>,
-    feature_attribute: &GrowthBookAttribute,
-    user_attributes: &[GrowthBookAttribute],
-) -> bool {
-    match &feature_attribute.value {
-        GrowthBookAttributeValue::Array(feature_values) => {
-            if let Some(GrowthBookAttributeValue::Array(user_values)) = user_attributes.find_value(&parent_attribute.unwrap_or(feature_attribute).key) {
-                feature_values.iter().all(|feature_item| user_values.iter().any(|user_item| feature_item == user_item))
-            } else {
-                false
-            }
-        },
-        _ => false,
-    }
-}
-
-fn vgt_condition(
-    parent_attribute: Option<&GrowthBookAttribute>,
-    feature_attribute: &GrowthBookAttribute,
-    user_attributes: &[GrowthBookAttribute],
-) -> bool {
-    version_condition_evaluate(parent_attribute, feature_attribute, user_attributes, |feature_version, user_version| user_version.gt(feature_version))
-}
-
-fn vgte_condition(
-    parent_attribute: Option<&GrowthBookAttribute>,
-    feature_attribute: &GrowthBookAttribute,
-    user_attributes: &[GrowthBookAttribute],
-) -> bool {
-    version_condition_evaluate(parent_attribute, feature_attribute, user_attributes, |feature_version, user_version| user_version.ge(feature_version))
-}
-
-fn vlt_condition(
-    parent_attribute: Option<&GrowthBookAttribute>,
-    feature_attribute: &GrowthBookAttribute,
-    user_attributes: &[GrowthBookAttribute],
-) -> bool {
-    version_condition_evaluate(parent_attribute, feature_attribute, user_attributes, |feature_version, user_version| user_version.lt(feature_version))
-}
-
-fn vlte_condition(
-    parent_attribute: Option<&GrowthBookAttribute>,
-    feature_attribute: &GrowthBookAttribute,
-    user_attributes: &[GrowthBookAttribute],
-) -> bool {
-    version_condition_evaluate(parent_attribute, feature_attribute, user_attributes, |feature_version, user_version| user_version.le(feature_version))
-}
-
-fn veq_condition(
-    parent_attribute: Option<&GrowthBookAttribute>,
-    feature_attribute: &GrowthBookAttribute,
-    user_attributes: &[GrowthBookAttribute],
-) -> bool {
-    version_condition_evaluate(parent_attribute, feature_attribute, user_attributes, |feature_version, user_version| user_version.eq(feature_version))
-}
-
-fn vne_condition(
-    parent_attribute: Option<&GrowthBookAttribute>,
-    feature_attribute: &GrowthBookAttribute,
-    user_attributes: &[GrowthBookAttribute],
-) -> bool {
-    version_condition_evaluate(parent_attribute, feature_attribute, user_attributes, |feature_version, user_version| user_version.ne(feature_version))
-}
-
-fn version_condition_evaluate(
-    parent_attribute: Option<&GrowthBookAttribute>,
-    feature_attribute: &GrowthBookAttribute,
-    user_attributes: &[GrowthBookAttribute],
-    condition: fn(&str, &str) -> bool,
-) -> bool {
-    if let Some(GrowthBookAttributeValue::String(user_version)) = user_attributes.find_value(&parent_attribute.unwrap_or(feature_attribute).key) {
-        let feature_version = feature_attribute.value.to_string();
-        condition(&normalize_version(&feature_version), &normalize_version(&user_version))
-    } else {
-        true
-    }
-}
-
-fn normalize_version(version: &str) -> String {
-    if let Ok(regex1) = Regex::new("(^v|\\+.*$)") {
-        if let Ok(regex2) = Regex::new("[-.]") {
-            if let Ok(regex3) = Regex::new("^\\d+") {
-                let string = regex1.replace_all(version, "").to_string();
-                let mut split = regex2.split(&string).filter(|item| !item.is_empty()).collect::<Vec<&str>>();
-                if split.len() == 3 {
-                    split.push("~");
-                }
-                split
-                    .iter()
-                    .map(|part| if regex3.is_match(part) { format!("{:0>5}", part) } else { part.to_string() })
-                    .filter(|part| !part.is_empty())
-                    .reduce(|a, b| format!("{a}-{b}"))
-                    .unwrap_or(version.to_string())
-            } else {
-                version.to_string()
-            }
-        } else {
-            version.to_string()
-        }
-    } else {
-        version.to_string()
-    }
-}
-
-fn elem_match_condition(
-    parent_attribute: Option<&GrowthBookAttribute>,
-    feature_attribute: &GrowthBookAttribute,
-    user_attributes: &[GrowthBookAttribute],
-    array_size: bool,
-) -> bool {
-    match &feature_attribute.value {
-        GrowthBookAttributeValue::Object(it) => it.iter().any(|condition_attribute| verify(parent_attribute, condition_attribute, user_attributes, array_size)),
-        _ => false,
     }
 }
 
