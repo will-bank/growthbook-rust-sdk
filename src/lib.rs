@@ -1,5 +1,6 @@
 pub mod client;
 mod condition;
+pub mod coverage;
 pub mod dto;
 mod env;
 pub mod error;

@@ -10,7 +10,7 @@ use crate::env::Environment;
 use crate::error::GrowthbookError;
 use crate::gateway::GrowthbookGateway;
 use crate::growthbook::GrowthBook;
-use crate::model_private::{BooleanFeature, Feature, ObjectFeature, StringFeature};
+use crate::model_private::Feature;
 use crate::model_public::GrowthBookAttribute;
 
 #[derive(Clone)]
@@ -27,9 +27,11 @@ async fn updated_features_task(
         match growthbook_gateway.get_features(None).await {
             Ok(new_config) => {
                 let mut writable_config = config.write().expect("problem to create mutex for gb data");
-                let updated_features = GrowthBook { features: new_config.features };
+                let updated_features = GrowthBook {
+                    forced_variations: new_config.forced_variations,
+                    features: new_config.features,
+                };
                 *writable_config = updated_features;
-                info!("[growthbook-sdk] features from growthbook was updated.");
             },
             Err(e) => {
                 error!("[growthbook-sdk] Failed to fetch features from server: {:?}", e);
@@ -56,7 +58,10 @@ impl GrowthBookClient {
         });
         let gb_gateway = GrowthbookGateway::new(api_url, sdk_key, default_timeout)?;
         let resp = gb_gateway.get_features(None).await?;
-        let growthbook_writable = Arc::new(RwLock::new(GrowthBook { features: resp.features }));
+        let growthbook_writable = Arc::new(RwLock::new(GrowthBook {
+            forced_variations: resp.forced_variations,
+            features: resp.features,
+        }));
         let gb_rw_clone = Arc::clone(&growthbook_writable);
 
         tokio::spawn(async move {
@@ -70,42 +75,27 @@ impl GrowthBookClient {
         &self,
         feature_name: &str,
         default_response: bool,
-        user_attributes: Option<&Vec<GrowthBookAttribute>>,
-    ) -> Result<BooleanFeature, GrowthbookError> {
-        let flag = self.read_gb().check(feature_name, Value::Bool(default_response), user_attributes);
-
-        match flag {
-            Feature::Boolean(it) => Ok(it),
-            it => Err(GrowthbookError::invalid_response_value_type(it, "boolean")),
-        }
+        user_attributes: Option<Vec<GrowthBookAttribute>>,
+    ) -> Feature {
+        self.read_gb().check(feature_name, &user_attributes)
     }
 
     pub fn string_feature(
         &self,
         feature_name: &str,
         default_response: &str,
-        user_attributes: Option<&Vec<GrowthBookAttribute>>,
-    ) -> Result<StringFeature, GrowthbookError> {
-        let flag = self.read_gb().check(feature_name, Value::String(String::from(default_response)), user_attributes);
-
-        match flag {
-            Feature::String(it) => Ok(it),
-            it => Err(GrowthbookError::invalid_response_value_type(it, "String")),
-        }
+        user_attributes: Option<Vec<GrowthBookAttribute>>,
+    ) -> Feature {
+        self.read_gb().check(feature_name, &user_attributes)
     }
 
     pub fn object_feature(
         &self,
         feature_name: &str,
         default_response: &Value,
-        user_attributes: Option<&Vec<GrowthBookAttribute>>,
-    ) -> Result<ObjectFeature, GrowthbookError> {
-        let flag = self.read_gb().check(feature_name, default_response.clone(), user_attributes);
-
-        match flag {
-            Feature::Object(it) => Ok(it),
-            it => Err(GrowthbookError::invalid_response_value_type(it, "Object")),
-        }
+        user_attributes: Option<Vec<GrowthBookAttribute>>,
+    ) -> Feature {
+        self.read_gb().check(feature_name, &user_attributes)
     }
 
     pub fn total_features(&self) -> usize {
@@ -118,7 +108,10 @@ impl GrowthBookClient {
             Ok(rw_read_guard) => (*rw_read_guard).clone(),
             Err(e) => {
                 error!("{}", format!("[growthbook-sdk] problem to reading gb mutex data returning empty {:?}", e));
-                GrowthBook { features: HashMap::new() }
+                GrowthBook {
+                    forced_variations: None,
+                    features: HashMap::new(),
+                }
             },
         }
     }

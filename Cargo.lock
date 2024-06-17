@@ -358,6 +358,7 @@ version = "0.1.0"
 dependencies = [
  "chrono",
  "hashers",
+ "indexmap",
  "lazy_static",
  "rand",
  "regex",

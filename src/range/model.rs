@@ -4,6 +4,18 @@ pub struct Range {
 }
 
 impl Range {
+    pub fn get_range(range: Option<Vec<f32>>) -> Option<Range> {
+        if let Some(range) = range {
+            if range.len() == 2 {
+                Some(Range { start: range[0], end: range[1] })
+            } else {
+                None
+            }
+        } else {
+            None
+        }
+    }
+
     pub fn get_bucket_range(
         variations: i64,
         coverage: &Option<f32>,

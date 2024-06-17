@@ -6,8 +6,6 @@ use std::num::ParseIntError;
 use chrono::OutOfRangeError;
 use reqwest::Response;
 
-use crate::model_private::Feature;
-
 #[derive(Debug)]
 pub enum GrowthbookErrorCode {
     GenericError,
@@ -33,23 +31,6 @@ impl GrowthbookError {
         message: &str,
     ) -> Self {
         GrowthbookError { code, message: String::from(message) }
-    }
-
-    pub fn invalid_response_value_type(
-        flag: Feature,
-        expected_type: &str,
-    ) -> Self {
-        let value = match flag {
-            Feature::Boolean(it) => it.enabled.to_string(),
-            Feature::String(it) => it.value,
-            Feature::Object(it) => it.value::<String>().unwrap_or(String::from("'ObjectFlag unknown value'")),
-            Feature::Invalid() => String::from("'INVALID TYPE'"),
-        };
-
-        GrowthbookError {
-            code: GrowthbookErrorCode::InvalidResponseValueType,
-            message: format!("Invalid value={value} for expected type={expected_type}"),
-        }
     }
 }
 
