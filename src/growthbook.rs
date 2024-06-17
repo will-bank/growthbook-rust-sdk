@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use crate::dto::GrowthBookFeature;
-use crate::model_private::Feature;
+use crate::model_private::FeatureResult;
 use crate::model_public::GrowthBookAttribute;
 
 #[derive(Clone)]
@@ -14,12 +14,13 @@ impl GrowthBook {
     pub fn check(
         &self,
         flag_name: &str,
-        user_attributes: &Option<Vec<GrowthBookAttribute>>,
-    ) -> Feature {
+        option_user_attributes: &Option<Vec<GrowthBookAttribute>>,
+    ) -> FeatureResult {
         if let Some(feature) = self.features.get(flag_name) {
+            let user_attributes = &option_user_attributes.clone().unwrap_or_default();
             feature.get_value(flag_name, vec![], user_attributes, &self.forced_variations, self.features.clone())
         } else {
-            Feature::unknown_feature()
+            FeatureResult::unknown_feature()
         }
     }
 }
@@ -35,7 +36,7 @@ mod test {
     use crate::dto::GrowthBookFeature;
     use crate::extensions::JsonHelper;
     use crate::growthbook::GrowthBook;
-    use crate::model_private::Feature;
+    use crate::model_private::FeatureResult;
     use crate::model_public::GrowthBookAttribute;
 
     #[tokio::test]
@@ -44,7 +45,7 @@ mod test {
 
         for value in cases.feature {
             let feature = EvalFeature::new(value);
-            let gb_test = serde_json::from_value::<GrowthBookForTest>(feature.feature.clone()).expect(format!("Failed to convert to GrowthBookForTest case='{}'", feature.name).as_str());
+            let gb_test = serde_json::from_value::<GrowthBookForTest>(feature.feature.clone()).unwrap_or_else(|_| panic!("Failed to convert to GrowthBookForTest case='{}'", feature.name));
             let gb = GrowthBook {
                 forced_variations: feature.forced_variations.clone(),
                 features: gb_test.features.unwrap_or_default(),
@@ -62,21 +63,15 @@ mod test {
 
     fn validate_result(
         eval_feature: EvalFeature,
-        feature_result: Feature,
+        feature_result: FeatureResult,
     ) {
         let case_name = eval_feature.name;
         let expected_result = eval_feature.result;
 
-        assert_eq!(expected_result.get_value("value"), feature_result.value, "Invalid value for '{case_name}'");
-        assert_eq!(expected_result.get_bool("on"), feature_result.on, "Invalid on for '{case_name}'");
-        assert_eq!(expected_result.get_bool("off"), feature_result.off, "Invalid off for '{case_name}'");
-        assert_eq!(expected_result.get_string("source"), feature_result.source, "Invalid source for '{case_name}'");
-
-        // assert_eq!(expected_result.get_string("experiment"),
-        // feature_result.experiment, "Invalid source for '{case_name}'"); //
-        // TODO assert_eq!(expected_result.get_string("experimentResult"
-        // ), feature_result.experimentResult, "Invalid source for
-        // '{case_name}'"); // TODO
+        assert_eq!(expected_result.get_value("value", Value::Null), feature_result.value, "Invalid value for '{case_name}'");
+        assert_eq!(expected_result.get_bool("on", false), feature_result.on, "Invalid on for '{case_name}'");
+        assert_eq!(expected_result.get_bool("off", false), feature_result.off, "Invalid off for '{case_name}'");
+        assert_eq!(expected_result.get_string("source", ""), feature_result.source, "Invalid source for '{case_name}'");
     }
 
     #[derive(Deserialize, Clone)]

@@ -127,14 +127,12 @@ impl GrowthBookFeatureRuleExperiment {
     }
 
     pub fn namespace_range(&self) -> Option<(String, Range)> {
-        if let Some(namespace) = &self.namespace {
-            Some((namespace[0].force_string(), Range {
-                start: namespace[1].force_f32(),
-                end: namespace[2].force_f32(),
-            }))
-        } else {
-            None
-        }
+        self.namespace.as_ref().map(|namespace| {
+            (namespace[0].force_string(""), Range {
+                start: namespace[1].force_f32(0.0),
+                end: namespace[2].force_f32(1.0),
+            })
+        })
     }
 
     pub fn model_experiment(&self) -> Experiment {

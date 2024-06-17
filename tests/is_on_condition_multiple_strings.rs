@@ -14,9 +14,9 @@ mod test {
     #[rstest]
     #[tokio::test]
     async fn should_return_enabled_default_when_fail_to_call_growthbook(ctx: &mut TestContext) -> Result<(), Box<dyn std::error::Error>> {
-        let flag_state = ctx.growthbook.is_on("flag-not-found", true, None)?;
+        let on = ctx.growthbook.is_on("flag-not-found", None);
 
-        assert!(flag_state.enabled);
+        assert!(!on);
 
         Ok(())
     }
@@ -31,9 +31,9 @@ mod test {
         }))
         .expect("Failed to create attributes");
 
-        let flag_state = ctx.growthbook.is_on("flag", true, Some(&vec))?;
+        let on = ctx.growthbook.is_on("flag", Some(vec));
 
-        assert!(!flag_state.enabled);
+        assert!(!on);
 
         Ok(())
     }
@@ -48,9 +48,9 @@ mod test {
         }))
         .expect("Failed to create attributes");
 
-        let flag_state = ctx.growthbook.is_on("flag", true, Some(&vec))?;
+        let on = ctx.growthbook.is_on("flag", Some(vec));
 
-        assert!(!flag_state.enabled);
+        assert!(!on);
 
         Ok(())
     }
@@ -65,9 +65,9 @@ mod test {
         }))
         .expect("Failed to create attributes");
 
-        let flag_state = ctx.growthbook.is_on("flag", true, Some(&vec))?;
+        let on = ctx.growthbook.is_on("flag", Some(vec));
 
-        assert!(!flag_state.enabled);
+        assert!(!on);
 
         Ok(())
     }
@@ -82,9 +82,9 @@ mod test {
         }))
         .expect("Failed to create attributes");
 
-        let flag_state = ctx.growthbook.is_on("flag", false, Some(&vec))?;
+        let on = ctx.growthbook.is_on("flag", Some(vec));
 
-        assert!(flag_state.enabled);
+        assert!(on);
 
         Ok(())
     }

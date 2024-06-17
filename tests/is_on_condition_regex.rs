@@ -18,9 +18,9 @@ mod test {
         }))
         .expect("Failed to create attributes");
 
-        let flag_state = ctx.growthbook.is_on("regex-rule", true, Some(&vec))?;
+        let on = ctx.growthbook.is_on("regex-rule", Some(vec));
 
-        assert!(!flag_state.enabled);
+        assert!(!on);
 
         Ok(())
     }
@@ -34,9 +34,9 @@ mod test {
         }))
         .expect("Failed to create attributes");
 
-        let flag_state = ctx.growthbook.is_on("regex-rule", true, Some(&vec))?;
+        let on = ctx.growthbook.is_on("regex-rule", Some(vec));
 
-        assert!(flag_state.enabled);
+        assert!(on);
 
         Ok(())
     }

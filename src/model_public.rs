@@ -1,7 +1,7 @@
 use std::fmt::{Display, Formatter};
 
 use regex::Regex;
-use serde_json::{Map, Number, Value};
+use serde_json::{Map, Value};
 
 use crate::error::{GrowthbookError, GrowthbookErrorCode};
 
@@ -65,9 +65,9 @@ impl GrowthBookAttributeValue {
         match self {
             GrowthBookAttributeValue::Empty => Value::Null,
             GrowthBookAttributeValue::String(it) => Value::from(it.clone()),
-            GrowthBookAttributeValue::Int(it) => Value::from(it.clone()),
-            GrowthBookAttributeValue::Float(it) => Value::from(it.clone()),
-            GrowthBookAttributeValue::Bool(it) => Value::from(it.clone()),
+            GrowthBookAttributeValue::Int(it) => Value::from(*it),
+            GrowthBookAttributeValue::Float(it) => Value::from(*it),
+            GrowthBookAttributeValue::Bool(it) => Value::from(*it),
             GrowthBookAttributeValue::Array(it) => Value::Array(it.iter().map(|item| item.to_value()).collect()),
             GrowthBookAttributeValue::Object(it) => {
                 let mut map = Map::new();

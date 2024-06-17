@@ -13,9 +13,9 @@ mod test {
     #[rstest]
     #[tokio::test]
     async fn should_return_enabled_default_when_fail_to_call_growthbook(ctx: &mut TestContext) -> Result<(), Box<dyn std::error::Error>> {
-        let on = ctx.growthbook.is_on("flag-not-exist", None);
+        let result = ctx.growthbook.feature_result("flag-not-exist", None);
 
-        assert!(!on);
+        assert!(!result.on);
 
         Ok(())
     }
@@ -29,9 +29,12 @@ mod test {
         }))
         .expect("Failed to create attributes");
 
-        let on = ctx.growthbook.is_on("experiment-rule-condition-flag", Some(vec));
+        let result = ctx.growthbook.feature_result("experiment-rule-condition-flag", Some(vec));
 
-        assert!(!on);
+        assert!(!result.on);
+        assert!(result.value.is_boolean());
+        assert!(!result.value.as_bool().expect("Failed to convert to bool"));
+        assert_eq!("0", result.experiment_result.expect("Failed to get experiment_result").key);
 
         Ok(())
     }
@@ -45,9 +48,12 @@ mod test {
         }))
         .expect("Failed to create attributes");
 
-        let on = ctx.growthbook.is_on("experiment-rule-condition-ninety-coverage-flag", Some(vec));
+        let result = ctx.growthbook.feature_result("experiment-rule-condition-ninety-coverage-flag", Some(vec));
 
-        assert!(on);
+        assert!(result.on);
+        assert!(result.value.is_boolean());
+        assert!(result.value.as_bool().expect("Failed to convert to bool"));
+        assert_eq!("2", result.experiment_result.expect("Failed to get experiment_result").key);
 
         Ok(())
     }
@@ -61,9 +67,12 @@ mod test {
         }))
         .expect("Failed to create attributes");
 
-        let on = ctx.growthbook.is_on("experiment-rule-condition-zero-coverage-flag", Some(vec));
+        let result = ctx.growthbook.feature_result("experiment-rule-condition-zero-coverage-flag", Some(vec));
 
-        assert!(!on);
+        assert!(!result.on);
+        assert!(result.value.is_boolean());
+        assert!(!result.value.as_bool().expect("Failed to convert to bool"));
+        assert!(result.experiment_result.is_none());
 
         Ok(())
     }

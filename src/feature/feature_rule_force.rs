@@ -3,27 +3,21 @@ use crate::coverage::model::Coverage;
 use crate::dto::GrowthBookFeatureRuleForce;
 use crate::extensions::FindGrowthBookAttribute;
 use crate::filter::use_case::Filter;
-use crate::model_private::Feature;
+use crate::model_private::FeatureResult;
 use crate::model_public::GrowthBookAttribute;
 
 impl GrowthBookFeatureRuleForce {
     pub fn get_match_value(
         &self,
         feature_name: &str,
-        option_user_attributes: &Option<Vec<GrowthBookAttribute>>,
-    ) -> Option<Feature> {
+        user_attributes: &Vec<GrowthBookAttribute>,
+    ) -> Option<FeatureResult> {
         if let Some(filters) = &self.filters {
             let hash_attribute = self.get_fallback_attribute();
-            if Filter::is_filtered_out(filters, &hash_attribute, option_user_attributes) {
+            if Filter::is_filtered_out(filters, &hash_attribute, user_attributes) {
                 return None;
             }
         }
-
-        let user_attributes = &if let Some(user_attributes) = &option_user_attributes {
-            user_attributes.clone()
-        } else {
-            vec![]
-        };
 
         if let Some(feature_attributes) = self.conditions() {
             if feature_attributes.matches(user_attributes) {
@@ -36,7 +30,11 @@ impl GrowthBookFeatureRuleForce {
         }
     }
 
-    fn check_range_or_force(&self, feature_name: &str, user_attributes: &Vec<GrowthBookAttribute>) -> Option<Feature> {
+    fn check_range_or_force(
+        &self,
+        feature_name: &str,
+        user_attributes: &Vec<GrowthBookAttribute>,
+    ) -> Option<FeatureResult> {
         if let Some(range) = self.range() {
             let fallback_attribute = self.get_fallback_attribute();
             if let Some(user_value) = user_attributes.find_value(&fallback_attribute) {
@@ -46,8 +44,7 @@ impl GrowthBookFeatureRuleForce {
                 None
             }
         } else {
-            Some(Feature::force(self.force.clone()))
+            Some(FeatureResult::force(self.force.clone()))
         }
     }
 }
-

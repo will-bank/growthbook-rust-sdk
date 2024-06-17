@@ -13,9 +13,9 @@ mod test {
     #[rstest]
     #[tokio::test]
     async fn should_return_enabled_default_when_fail_to_call_growthbook(ctx: &mut TestContext) -> Result<(), Box<dyn std::error::Error>> {
-        let flag_state = ctx.growthbook.is_on("not-exist-flag", false, None)?;
+        let on = ctx.growthbook.is_on("not-exist-flag", None);
 
-        assert!(!flag_state.enabled);
+        assert!(!on);
 
         Ok(())
     }
@@ -24,9 +24,9 @@ mod test {
     #[rstest]
     #[tokio::test]
     async fn should_return_enabled_false_flag_id_is_disabled(ctx: &mut TestContext) -> Result<(), Box<dyn std::error::Error>> {
-        let flag_state = ctx.growthbook.is_on("simple-flag-disabled", true, None)?;
+        let on = ctx.growthbook.is_on("simple-flag-disabled", None);
 
-        assert!(!flag_state.enabled);
+        assert!(!on);
 
         Ok(())
     }
@@ -35,9 +35,9 @@ mod test {
     #[rstest]
     #[tokio::test]
     async fn should_return_enabled_true_flag_id_is_enabled(ctx: &mut TestContext) -> Result<(), Box<dyn std::error::Error>> {
-        let flag_state = ctx.growthbook.is_on("simple-flag", false, None)?;
+        let on = ctx.growthbook.is_on("simple-flag", None);
 
-        assert!(flag_state.enabled);
+        assert!(on);
 
         Ok(())
     }
@@ -51,9 +51,9 @@ mod test {
         }))
         .expect("Failed to create attributes");
 
-        let flag_state = ctx.growthbook.is_on("simple-rule-conditio", true, Some(&vec))?;
+        let on = ctx.growthbook.is_on("simple-rule-conditio", Some(vec));
 
-        assert!(!flag_state.enabled);
+        assert!(!on);
 
         Ok(())
     }
@@ -67,9 +67,9 @@ mod test {
         }))
         .expect("Failed to create attributes");
 
-        let flag_state = ctx.growthbook.is_on("simple-rule-conditio", true, Some(&vec))?;
+        let on = ctx.growthbook.is_on("simple-rule-conditio", Some(vec));
 
-        assert!(flag_state.enabled);
+        assert!(on);
 
         Ok(())
     }
@@ -83,9 +83,9 @@ mod test {
         }))
         .expect("Failed to create attributes");
 
-        let flag_state = ctx.growthbook.is_on("simple-rule-conditio", true, Some(&vec))?;
+        let on = ctx.growthbook.is_on("simple-rule-conditio", Some(vec));
 
-        assert!(!flag_state.enabled);
+        assert!(!on);
 
         Ok(())
     }

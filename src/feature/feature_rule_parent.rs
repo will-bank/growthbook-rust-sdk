@@ -1,15 +1,15 @@
 use crate::condition::use_case::ConditionsMatchesAttributes;
 use crate::dto::GrowthBookFeatureRuleParentData;
-use crate::model_private::Feature;
+use crate::model_private::FeatureResult;
 use crate::model_public::{GrowthBookAttribute, GrowthBookAttributeValue};
 
 impl GrowthBookFeatureRuleParentData {
     pub fn is_met(
         &self,
-        feature: Feature,
+        feature: FeatureResult,
     ) -> bool {
         if let Some(feature_attributes) = self.conditions() {
-            feature_attributes.matches(&vec![GrowthBookAttribute::new(String::from("value"), GrowthBookAttributeValue::from(feature.value))])
+            feature_attributes.matches(&[GrowthBookAttribute::new(String::from("value"), GrowthBookAttributeValue::from(feature.value))])
         } else {
             true
         }

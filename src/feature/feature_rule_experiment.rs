@@ -3,9 +3,9 @@ use std::collections::HashMap;
 use serde_json::Value;
 
 use crate::dto::GrowthBookFeatureRuleExperiment;
-use crate::extensions::FindGrowthBookAttribute;
+use crate::extensions::{FindGrowthBookAttribute, JsonHelper};
 use crate::hash::{HashCode, HashCodeVersion};
-use crate::model_private::{ExperimentResult, Feature};
+use crate::model_private::{ExperimentResult, FeatureResult};
 use crate::model_public::GrowthBookAttribute;
 use crate::range::model::Range;
 
@@ -13,88 +13,58 @@ impl GrowthBookFeatureRuleExperiment {
     pub fn get_match_value(
         &self,
         feature_name: &str,
-        option_user_attributes: &Option<Vec<GrowthBookAttribute>>,
+        user_attributes: &Vec<GrowthBookAttribute>,
         forced_variations: &Option<HashMap<String, i64>>,
-    ) -> Option<Feature> {
-        if let Some(user_attributes) = option_user_attributes {
-            if let Some(feature_attribute) = &self.hash_attribute {
-                if let Some(user_value) = user_attributes.find_value(feature_attribute) {
-                    if let Some((namespace, range)) = &self.namespace_range() {
-                        let user_weight = HashCode::hash_code(&format!("{}__", user_value.to_string()), namespace, HashCodeVersion::from(1)).unwrap_or(-1.0);
-                        if !range.in_range(&user_weight) {
-                            return None; // TODO: ???
-                        }
-                    }
+    ) -> Option<FeatureResult> {
+        if let Some(feature_attribute) = &self.hash_attribute {
+            self.check_experiment(&feature_name, user_attributes, forced_variations, feature_attribute)
+        } else {
+            let fallback_attribute = self.get_fallback_attribute();
+            self.check_experiment(&feature_name, user_attributes, forced_variations, &fallback_attribute)
+        }
+    }
 
-                    if let Some(forced_variation) = self.forced_variation(feature_name, user_attributes, forced_variations) {
-                        return forced_variation;
-                    }
-
-                    let user_weight = HashCode::hash_code(&user_value.to_string(), &self.seed(feature_name), HashCodeVersion::from(self.hash_version)).unwrap_or(-1.0);
-                    let ranges = self.ranges();
-                    let index = choose_variation(user_weight, ranges);
-                    if index >= 0 {
-                        let usize_index = index as usize;
-                        let value = self.variations[usize_index].clone();
-                        let (meta_value, pass_through) = self.get_meta_value(usize_index);
-                        if !pass_through {
-                            return Some(Feature::experiment(
-                                value.clone(),
-                                self.model_experiment(),
-                                create_experiment_result(
-                                    feature_name,
-                                    value.clone(),
-                                    index,
-                                    true,
-                                    Some(feature_attribute.clone()),
-                                    Some(user_value.to_value()),
-                                    Some(user_weight),
-                                    meta_value,
-                                ),
-                            ));
-                        }
-                    }
+    fn check_experiment(
+        &self,
+        feature_name: &&str,
+        user_attributes: &Vec<GrowthBookAttribute>,
+        forced_variations: &Option<HashMap<String, i64>>,
+        feature_attribute: &str,
+    ) -> Option<FeatureResult> {
+        if let Some(user_value) = user_attributes.find_value(feature_attribute) {
+            if let Some((namespace, range)) = &self.namespace_range() {
+                let user_weight = HashCode::hash_code(&format!("{}__", user_value), namespace, HashCodeVersion::from(1)).unwrap_or(-1.0);
+                if !range.in_range(&user_weight) {
+                    return None;
                 }
-            } else {
-                let fallback_attribute = self.get_fallback_attribute();
-                if let Some(user_value) = user_attributes.find_value(&fallback_attribute) {
-                    if let Some((namespace, range)) = &self.namespace_range() {
-                        let user_weight = HashCode::hash_code(&format!("{}__", user_value.to_string()), namespace, HashCodeVersion::from(1)).unwrap_or(-1.0);
-                        if !range.in_range(&user_weight) {
-                            return None; // TODO: ???
-                        }
-                    }
+            }
 
-                    if let Some(forced_variation) = self.forced_variation(feature_name, user_attributes, forced_variations) {
-                        return forced_variation;
-                    }
+            if let Some(forced_variation) = self.forced_variation(feature_name, user_attributes, forced_variations) {
+                return Some(forced_variation);
+            }
 
-                    let user_weight = HashCode::hash_code(&user_value.to_string(), &self.seed(feature_name), HashCodeVersion::from(self.hash_version)).unwrap_or(-1.0);
-                    let ranges = self.ranges();
-                    let index = choose_variation(user_weight, ranges);
-                    if index >= 0 {
-                        let usize_index = index as usize;
-                        let value = self.variations[usize_index].clone();
-                        let (meta_value, pass_through) = self.get_meta_value(usize_index);
-                        if !pass_through {
-                            return Some(Feature::experiment(
-                                value.clone(),
-                                self.model_experiment(),
-                                create_experiment_result(
-                                    feature_name,
-                                    value.clone(),
-                                    index,
-                                    true,
-                                    Some(fallback_attribute.clone()),
-                                    Some(user_value.to_value()),
-                                    Some(user_weight),
-                                    meta_value,
-                                ),
-                            ));
-                        }
-                    }
-                } else {
-                    // TODO:
+            let user_weight = HashCode::hash_code(&user_value.to_string(), &self.seed(feature_name), HashCodeVersion::from(self.hash_version)).unwrap_or(-1.0);
+            let ranges = self.ranges();
+            let index = choose_variation(user_weight, ranges);
+            if index >= 0 {
+                let usize_index = index as usize;
+                let value = self.variations[usize_index].clone();
+                let (meta_value, pass_through) = self.get_meta_value(usize_index);
+                if !pass_through {
+                    return Some(FeatureResult::experiment(
+                        value.clone(),
+                        self.model_experiment(),
+                        create_experiment_result(
+                            feature_name,
+                            value.clone(),
+                            index,
+                            true,
+                            Some(feature_attribute.to_string()),
+                            Some(user_value.to_value()),
+                            Some(user_weight),
+                            meta_value,
+                        ),
+                    ));
                 }
             }
         }
@@ -107,72 +77,66 @@ impl GrowthBookFeatureRuleExperiment {
         feature_name: &str,
         user_attributes: &Vec<GrowthBookAttribute>,
         forced_variations: &Option<HashMap<String, i64>>,
-    ) -> Option<Option<Feature>> {
+    ) -> Option<FeatureResult> {
         if let Some(forced_variations) = forced_variations {
             if let Some(found_forced_variation) = forced_variations.get(feature_name) {
                 let hash_attribute = self.hash_attribute.clone().unwrap_or(self.get_fallback_attribute());
                 if let Some(user_value) = user_attributes.find_value(&hash_attribute) {
-                    let forced_variation_index = found_forced_variation.clone() as usize;
+                    let forced_variation_index = *found_forced_variation as usize;
                     let value = self.variations[forced_variation_index].clone();
                     let (meta_value, pass_through) = self.get_meta_value(forced_variation_index);
-                    return Some(Some(Feature::experiment(
-                        value.clone(),
-                        self.model_experiment(),
-                        create_experiment_result(
-                            feature_name,
+                    if !pass_through {
+                        return Some(FeatureResult::experiment(
                             value.clone(),
-                            found_forced_variation.clone(),
-                            true,
-                            self.hash_attribute.clone(),
-                            Some(user_value.to_value()),
-                            None,
-                            meta_value,
-                        ),
-                    )));
+                            self.model_experiment(),
+                            create_experiment_result(
+                                feature_name,
+                                value.clone(),
+                                *found_forced_variation,
+                                true,
+                                self.hash_attribute.clone(),
+                                Some(user_value.to_value()),
+                                None,
+                                meta_value,
+                            ),
+                        ));
+                    }
                 }
             }
         }
         None
     }
 
-    // TODO: need refactory
     fn get_meta_value(
         &self,
         usize_index: usize,
     ) -> (String, bool) {
-        self.meta
-            .clone()
-            .map(|it| {
-                if it.is_array() {
-                    if let Some(meta_value) = it.as_array().expect("Failed to convert to array").get(usize_index) {
-                        let pass_through = if let Some(pass_through_value) = meta_value.get("passthrough") {
-                            pass_through_value.as_bool().expect("Failed to convert to bool")
-                        } else {
-                            false
-                        };
-
-                        if let Some(key) = meta_value.get("key") {
-                            if key.is_string() {
-                                (key.as_str().expect("Failed to convert to str").to_string(), pass_through)
-                            } else {
-                                (key.to_string(), pass_through)
-                            }
-                        } else {
-                            (format!("{usize_index}"), pass_through)
-                        }
+        match &self.meta {
+            None => (format!("{usize_index}"), false),
+            Some(it) => {
+                if let Some(meta_value) = it.force_array(vec![]).get(usize_index) {
+                    let pass_through = if let Some(pass_through_value) = meta_value.get("passthrough") {
+                        pass_through_value.force_bool(false)
                     } else {
-                        (format!("{usize_index}"), false)
+                        false
+                    };
+
+                    if let Some(key) = meta_value.get("key") {
+                        (key.force_string(""), pass_through)
+                    } else {
+                        (format!("{usize_index}"), pass_through)
                     }
                 } else {
                     (format!("{usize_index}"), false)
                 }
-            })
-            .unwrap_or((format!("{usize_index}"), false))
+            },
+        }
     }
 
     fn get_fallback_attribute(&self) -> String { self.fallback_attribute.clone().unwrap_or(String::from("id")) }
 }
 
+#[allow(clippy::too_many_arguments)]
 fn create_experiment_result(
     feature_name: &str,
     value: Value,

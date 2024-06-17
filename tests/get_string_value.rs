@@ -4,7 +4,6 @@ mod commons;
 mod test {
     use rstest::rstest;
     use test_context::test_context;
-    use uuid::Uuid;
 
     use crate::commons::TestContext;
 
@@ -12,11 +11,10 @@ mod test {
     #[rstest]
     #[tokio::test]
     async fn should_return_enabled_default_when_fail_to_call_growthbook(ctx: &mut TestContext) -> Result<(), Box<dyn std::error::Error>> {
-        let expected_value = Uuid::now_v7().to_string();
+        let result = ctx.growthbook.feature_result("not-found", None);
 
-        let string_flag = ctx.growthbook.string_feature("not-found", &expected_value.clone(), None)?;
-
-        assert_eq!(expected_value, string_flag.value);
+        assert!(!result.on);
+        assert!(result.value.is_null());
 
         Ok(())
     }
@@ -25,10 +23,13 @@ mod test {
     #[rstest]
     #[tokio::test]
     async fn should_return_value(ctx: &mut TestContext) -> Result<(), Box<dyn std::error::Error>> {
-        let expected_value = "018fcf11-bb67-7789-8d10-fcbb7de4ff7b";
-        let string_flag = ctx.growthbook.string_feature("fixed-value", &Uuid::now_v7().to_string(), None)?;
+        let result = ctx.growthbook.feature_result("fixed-value", None);
 
-        assert_eq!(expected_value, string_flag.value);
+        assert!(result.on);
+        assert!(result.value.is_string());
+
+        let string = result.value_as::<String>()?;
+        assert_eq!("018fcf11-bb67-7789-8d10-fcbb7de4ff7b", string);
 
         Ok(())
     }

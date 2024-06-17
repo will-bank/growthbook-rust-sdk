@@ -60,13 +60,13 @@ mod test {
 
         let client = GrowthBookClient::new(api_url, sdk_key.to_string().as_str(), Some(update_interval), None).await?;
 
-        let first_result = client.is_on("new_feature", false, None)?;
-        assert!(!first_result.enabled);
+        let first_result = client.is_on("new_feature", None);
+        assert!(!first_result);
 
         tokio::time::sleep(Duration::from_secs(2)).await;
 
-        let result = client.is_on("another_feature", false, None)?;
-        assert!(result.enabled);
+        let result = client.is_on("another_feature", None);
+        assert!(result);
         Ok(())
     }
 }

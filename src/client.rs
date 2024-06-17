@@ -2,15 +2,14 @@ use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
 use std::time::Duration;
 
-use serde_json::Value;
 use tokio::time::sleep;
-use tracing::{error, info};
+use tracing::error;
 
 use crate::env::Environment;
 use crate::error::GrowthbookError;
 use crate::gateway::GrowthbookGateway;
 use crate::growthbook::GrowthBook;
-use crate::model_private::Feature;
+use crate::model_private::FeatureResult;
 use crate::model_public::GrowthBookAttribute;
 
 #[derive(Clone)]
@@ -74,27 +73,24 @@ impl GrowthBookClient {
     pub fn is_on(
         &self,
         feature_name: &str,
-        default_response: bool,
         user_attributes: Option<Vec<GrowthBookAttribute>>,
-    ) -> Feature {
-        self.read_gb().check(feature_name, &user_attributes)
+    ) -> bool {
+        self.read_gb().check(feature_name, &user_attributes).on
     }
 
-    pub fn string_feature(
+    pub fn is_off(
         &self,
         feature_name: &str,
-        default_response: &str,
         user_attributes: Option<Vec<GrowthBookAttribute>>,
-    ) -> Feature {
-        self.read_gb().check(feature_name, &user_attributes)
+    ) -> bool {
+        self.read_gb().check(feature_name, &user_attributes).off
     }
 
-    pub fn object_feature(
+    pub fn feature_result(
         &self,
         feature_name: &str,
-        default_response: &Value,
         user_attributes: Option<Vec<GrowthBookAttribute>>,
-    ) -> Feature {
+    ) -> FeatureResult {
         self.read_gb().check(feature_name, &user_attributes)
     }
 

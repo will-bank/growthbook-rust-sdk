@@ -13,64 +13,128 @@ pub trait JsonHelper {
     fn get_value(
         &self,
         name: &str,
+        default: Value,
     ) -> Value;
     fn get_bool(
         &self,
         name: &str,
+        default: bool,
     ) -> bool;
     fn get_string(
         &self,
         name: &str,
+        default: &str,
     ) -> String;
     fn get_array(
         &self,
         name: &str,
+        default: Vec<Value>,
     ) -> Vec<Value>;
-    fn force_string(&self) -> String;
-    fn force_i64(&self) -> i64;
-    fn force_f32(&self) -> f32;
-    fn force_f64(&self) -> f64;
-    fn force_array(&self) -> Vec<Value>;
+
+    fn force_string(
+        &self,
+        default: &str,
+    ) -> String;
+    fn force_i64(
+        &self,
+        default: i64,
+    ) -> i64;
+    fn force_f32(
+        &self,
+        default: f32,
+    ) -> f32;
+    fn force_f64(
+        &self,
+        default: f64,
+    ) -> f64;
+    fn force_bool(
+        &self,
+        default: bool,
+    ) -> bool;
+    fn force_array(
+        &self,
+        default: Vec<Value>,
+    ) -> Vec<Value>;
 }
 
 impl JsonHelper for Value {
     fn get_value(
         &self,
         name: &str,
+        default: Value,
     ) -> Value {
-        self.get(name).expect(format!("Failed to get {name}").as_str()).clone()
+        self.get(name).unwrap_or(&default).clone()
     }
 
     fn get_bool(
         &self,
         name: &str,
+        default: bool,
     ) -> bool {
-        self.get_value(name).as_bool().expect("Failed to convert to bool")
+        self.get_value(name, Value::Bool(default)).force_bool(default)
     }
 
     fn get_string(
         &self,
         name: &str,
+        default: &str,
     ) -> String {
-        self.get_value(name).force_string()
+        self.get_value(name, Value::String(String::from(default))).force_string(default)
     }
 
     fn get_array(
         &self,
         name: &str,
+        default: Vec<Value>,
     ) -> Vec<Value> {
-        self.get(name).expect(format!("Failed to get {name}").as_str()).force_array()
+        self.get(name).unwrap_or(&Value::Null).force_array(default)
     }
 
-    fn force_string(&self) -> String { self.as_str().expect("Failed to convert to str").to_string() }
+    fn force_string(
+        &self,
+        default: &str,
+    ) -> String {
+        if self.is_string() {
+            self.as_str().unwrap_or(default).to_string()
+        } else {
+            self.to_string()
+        }
+    }
 
-    fn force_i64(&self) -> i64 { self.as_i64().expect("Failed to convert to i64") }
+    fn force_i64(
+        &self,
+        default: i64,
+    ) -> i64 {
+        self.as_i64().unwrap_or(default)
+    }
 
-    fn force_f32(&self) -> f32 { self.force_f64() as f32 }
+    fn force_f32(
+        &self,
+        default: f32,
+    ) -> f32 {
+        self.force_f64(default as f64) as f32
+    }
 
-    fn force_f64(&self) -> f64 { self.as_f64().expect("Failed to convert to f64") }
+    fn force_f64(
+        &self,
+        default: f64,
+    ) -> f64 {
+        self.as_f64().unwrap_or(default)
+    }
 
-    fn force_array(&self) -> Vec<Value> { self.as_array().expect("Failed to convert to array").clone() }
+    fn force_bool(
+        &self,
+        default: bool,
+    ) -> bool {
+        self.as_bool().unwrap_or(default)
+    }
+
+    fn force_array(
+        &self,
+        default: Vec<Value>,
+    ) -> Vec<Value> {
+        self.as_array().unwrap_or(&default).clone()
+    }
 }
 
 impl FindGrowthBookAttribute for Vec<GrowthBookAttribute> {

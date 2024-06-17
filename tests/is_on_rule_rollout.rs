@@ -14,9 +14,9 @@ mod test {
     #[rstest]
     #[tokio::test]
     async fn should_return_enabled_default_when_fail_to_call_growthbook(ctx: &mut TestContext) -> Result<(), Box<dyn std::error::Error>> {
-        let flag_state = ctx.growthbook.is_on("flag-not-exists", true, None)?;
+        let on = ctx.growthbook.is_on("flag-not-exists", None);
 
-        assert!(flag_state.enabled);
+        assert!(!on);
 
         Ok(())
     }
@@ -30,9 +30,9 @@ mod test {
         }))
         .expect("Failed to create attributes");
 
-        let flag_state = ctx.growthbook.is_on("rollout-zero-percentage-flag-condition-by-attribute", true, Some(&vec))?;
+        let on = ctx.growthbook.is_on("rollout-zero-percentage-flag-condition-by-attribute", Some(vec));
 
-        assert!(!flag_state.enabled);
+        assert!(!on);
 
         Ok(())
     }
@@ -46,9 +46,9 @@ mod test {
         }))
         .expect("Failed to create attributes");
 
-        let flag_state = ctx.growthbook.is_on("rollout-one-hundred-percentage-flag-condition-by-attribute", false, Some(&vec))?;
+        let on = ctx.growthbook.is_on("rollout-one-hundred-percentage-flag-condition-by-attribute", Some(vec));
 
-        assert!(flag_state.enabled);
+        assert!(on);
 
         Ok(())
     }
@@ -62,9 +62,9 @@ mod test {
         }))
         .expect("Failed to create attributes");
 
-        let flag_state = ctx.growthbook.is_on("rollout-flag-condition-by-attribute", false, Some(&vec))?;
+        let on = ctx.growthbook.is_on("rollout-flag-condition-by-attribute", Some(vec));
 
-        assert!(flag_state.enabled);
+        assert!(on);
 
         Ok(())
     }
@@ -78,9 +78,9 @@ mod test {
         }))
         .expect("Failed to create attributes");
 
-        let flag_state = ctx.growthbook.is_on("rollout-flag-condition-by-attribute", false, Some(&vec))?;
+        let on = ctx.growthbook.is_on("rollout-flag-condition-by-attribute", Some(vec));
 
-        assert!(!flag_state.enabled);
+        assert!(!on);
 
         Ok(())
     }
@@ -94,9 +94,9 @@ mod test {
         }))
         .expect("Failed to create attributes");
 
-        let flag_state = ctx.growthbook.is_on("rollout-flag-condition-by-attribute", true, Some(&vec))?;
+        let on = ctx.growthbook.is_on("rollout-flag-condition-by-attribute", Some(vec));
 
-        assert!(!flag_state.enabled);
+        assert!(!on);
 
         Ok(())
     }

@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use crate::dto::{GrowthBookFeature, GrowthBookFeatureRule};
-use crate::model_private::Feature;
+use crate::model_private::FeatureResult;
 use crate::model_public::GrowthBookAttribute;
 
 impl GrowthBookFeature {
@@ -9,10 +9,10 @@ impl GrowthBookFeature {
         &self,
         feature_name: &str,
         feature_name_decorate: Vec<String>,
-        user_attributes: &Option<Vec<GrowthBookAttribute>>,
+        user_attributes: &Vec<GrowthBookAttribute>,
         forced_variations: &Option<HashMap<String, i64>>,
         all_features: HashMap<String, GrowthBookFeature>,
-    ) -> Feature {
+    ) -> FeatureResult {
         if let Some(rules) = &self.rules {
             for rule in rules {
                 match rule {
@@ -35,7 +35,7 @@ impl GrowthBookFeature {
                         for parent in &it.parent_conditions {
                             let parent_feature_name = &parent.id;
                             if feature_name_decorate.contains(parent_feature_name) {
-                                return Feature::cyclic_prerequisite();
+                                return FeatureResult::cyclic_prerequisite();
                             }
 
                             let mut updated_decorate = feature_name_decorate.clone();
@@ -44,15 +44,15 @@ impl GrowthBookFeature {
                             let parent_response = if let Some(parent_feature) = all_features.get(parent_feature_name) {
                                 parent_feature.get_value(parent_feature_name, updated_decorate, user_attributes, forced_variations, all_features.clone())
                             } else {
-                                Feature::unknown_feature()
+                                FeatureResult::unknown_feature()
                             };
 
                             if parent_response.source == "cyclicPrerequisite" {
-                                return Feature::cyclic_prerequisite();
+                                return FeatureResult::cyclic_prerequisite();
                             }
 
                             if !parent.is_met(parent_response) {
-                                return Feature::prerequisite();
+                                return FeatureResult::prerequisite();
                             }
                         }
                     },
@@ -63,6 +63,6 @@ impl GrowthBookFeature {
             }
         }
 
-        Feature::from_default_value(self.default_value.clone())
+        FeatureResult::from_default_value(self.default_value.clone())
     }
 }
