@@ -59,7 +59,9 @@ impl GrowthBookAttributeValue {
             false
         }
     }
-    pub fn as_f64(&self) -> Option<f64> { self.to_string().replace('.', "").parse::<f64>().ok() }
+    pub fn as_f64(&self) -> Option<f64> {
+        self.to_string().replace('.', "").parse::<f64>().ok()
+    }
 
     pub fn to_value(&self) -> Value {
         match self {

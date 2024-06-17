@@ -15,11 +15,6 @@ pub trait JsonHelper {
         name: &str,
         default: Value,
     ) -> Value;
-    fn get_bool(
-        &self,
-        name: &str,
-        default: bool,
-    ) -> bool;
     fn get_string(
         &self,
         name: &str,
@@ -35,10 +30,6 @@ pub trait JsonHelper {
         &self,
         default: &str,
     ) -> String;
-    fn force_i64(
-        &self,
-        default: i64,
-    ) -> i64;
     fn force_f32(
         &self,
         default: f32,
@@ -66,14 +57,6 @@ impl JsonHelper for Value {
         self.get(name).unwrap_or(&default).clone()
     }
 
-    fn get_bool(
-        &self,
-        name: &str,
-        default: bool,
-    ) -> bool {
-        self.get_value(name, Value::Bool(default)).force_bool(default)
-    }
-
     fn get_string(
         &self,
         name: &str,
@@ -99,13 +82,6 @@ impl JsonHelper for Value {
         } else {
             self.to_string()
         }
-    }
-
-    fn force_i64(
-        &self,
-        default: i64,
-    ) -> i64 {
-        self.as_i64().unwrap_or(default)
     }
 
     fn force_f32(

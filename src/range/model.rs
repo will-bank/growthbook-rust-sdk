@@ -48,15 +48,7 @@ impl Range {
 fn clamped_coverage(coverage: Option<f32>) -> f32 {
     match coverage {
         None => 1.0,
-        Some(value) => {
-            if value > 1.0 {
-                1.0
-            } else if value < 0.0 {
-                0.0
-            } else {
-                value
-            }
-        },
+        Some(value) => value.clamp(0.0, 1.0),
     }
 }
 

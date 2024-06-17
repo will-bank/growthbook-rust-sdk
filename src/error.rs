@@ -44,7 +44,9 @@ impl Display for GrowthbookError {
 }
 
 impl Error for GrowthbookError {
-    fn description(&self) -> &str { &self.message }
+    fn description(&self) -> &str {
+        &self.message
+    }
 }
 
 impl From<Box<dyn Error>> for GrowthbookError {

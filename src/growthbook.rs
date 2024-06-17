@@ -69,8 +69,16 @@ mod test {
         let expected_result = eval_feature.result;
 
         assert_eq!(expected_result.get_value("value", Value::Null), feature_result.value, "Invalid value for '{case_name}'");
-        assert_eq!(expected_result.get_bool("on", false), feature_result.on, "Invalid on for '{case_name}'");
-        assert_eq!(expected_result.get_bool("off", false), feature_result.off, "Invalid off for '{case_name}'");
+        assert_eq!(
+            expected_result.get("on").expect("Failed to get on").as_bool().expect("Failed to convert to bool"),
+            feature_result.on,
+            "Invalid on for '{case_name}'"
+        );
+        assert_eq!(
+            expected_result.get("off").expect("Failed to get off").as_bool().expect("Failed to convert to bool"),
+            feature_result.off,
+            "Invalid off for '{case_name}'"
+        );
         assert_eq!(expected_result.get_string("source", ""), feature_result.source, "Invalid source for '{case_name}'");
     }
 

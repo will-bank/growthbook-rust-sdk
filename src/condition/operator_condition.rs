@@ -111,15 +111,11 @@ impl OperatorCondition {
     ) -> bool {
         if let Some(user_value) = user_attributes.find_value(&parent_attribute.unwrap_or(feature_attribute).key) {
             match &feature_attribute.value {
-                GrowthBookAttributeValue::Array(feature_array) => {
-                    feature_array.iter().any(|feature_item| {
-                        match &user_value {
-                            GrowthBookAttributeValue::Array(user_array) => user_array.iter().any(|user_item| feature_item.to_string() == user_item.to_string()),
-                            GrowthBookAttributeValue::Empty => false,
-                            it => feature_item.to_string() == it.to_string(),
-                        }
-                    })
-                },
+                GrowthBookAttributeValue::Array(feature_array) => feature_array.iter().any(|feature_item| match &user_value {
+                    GrowthBookAttributeValue::Array(user_array) => user_array.iter().any(|user_item| feature_item.to_string() == user_item.to_string()),
+                    GrowthBookAttributeValue::Empty => false,
+                    it => feature_item.to_string() == it.to_string(),
+                }),
                 _ => false,
             }
         } else {
@@ -135,15 +131,11 @@ impl OperatorCondition {
     ) -> bool {
         if let Some(user_value) = user_attributes.find_value(&parent_attribute.unwrap_or(feature_attribute).key) {
             match &feature_attribute.value {
-                GrowthBookAttributeValue::Array(feature_array) => {
-                    feature_array.iter().all(|feature_item| {
-                        !match &user_value {
-                            GrowthBookAttributeValue::Array(user_array) => user_array.iter().any(|user_item| feature_item.to_string() == user_item.to_string()),
-                            GrowthBookAttributeValue::Empty => false,
-                            it => feature_item.to_string() == it.to_string(),
-                        }
-                    })
-                },
+                GrowthBookAttributeValue::Array(feature_array) => feature_array.iter().all(|feature_item| !match &user_value {
+                    GrowthBookAttributeValue::Array(user_array) => user_array.iter().any(|user_item| feature_item.to_string() == user_item.to_string()),
+                    GrowthBookAttributeValue::Empty => false,
+                    it => feature_item.to_string() == it.to_string(),
+                }),
                 _ => false,
             }
         } else {
@@ -162,11 +154,9 @@ impl OperatorCondition {
                 if it.is_empty() {
                     true
                 } else {
-                    it.iter().any(|next_value| {
-                        match next_value {
-                            GrowthBookAttributeValue::Object(feature_value) => feature_value.iter().all(|next_attribute| recursive(None, next_attribute, user_attributes, false)),
-                            _ => false,
-                        }
+                    it.iter().any(|next_value| match next_value {
+                        GrowthBookAttributeValue::Object(feature_value) => feature_value.iter().all(|next_attribute| recursive(None, next_attribute, user_attributes, false)),
+                        _ => false,
                     })
                 }
             },
@@ -183,21 +173,17 @@ fn and_nor(
     negate: bool,
 ) -> bool {
     match &feature_attribute.value {
-        GrowthBookAttributeValue::Array(it) => {
-            it.iter().all(|next_value| {
-                match next_value {
-                    GrowthBookAttributeValue::Object(feature_value) => {
-                        let result = feature_value.iter().all(|next_attribute| recursive(None, next_attribute, user_attributes, false));
-                        if negate {
-                            !result
-                        } else {
-                            result
-                        }
-                    },
-                    _ => false,
+        GrowthBookAttributeValue::Array(it) => it.iter().all(|next_value| match next_value {
+            GrowthBookAttributeValue::Object(feature_value) => {
+                let result = feature_value.iter().all(|next_attribute| recursive(None, next_attribute, user_attributes, false));
+                if negate {
+                    !result
+                } else {
+                    result
                 }
-            })
-        },
+            },
+            _ => false,
+        }),
         _ => false,
     }
 }

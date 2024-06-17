@@ -9,6 +9,7 @@ use uuid::Uuid;
 use wiremock::matchers::{method, path};
 use wiremock::{Mock, MockServer, ResponseTemplate};
 
+#[allow(dead_code)]
 pub struct TestContext {
     pub mock_server: MockServer,
     pub growthbook: GrowthBookClient,

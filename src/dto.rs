@@ -91,23 +91,37 @@ pub struct GrowthBookFeatureRuleExperiment {
 }
 
 impl GrowthBookFeatureRuleParentData {
-    pub fn conditions(&self) -> Option<Vec<GrowthBookAttribute>> { option_map_to_attributes(self.condition.clone()) }
+    pub fn conditions(&self) -> Option<Vec<GrowthBookAttribute>> {
+        option_map_to_attributes(self.condition.clone())
+    }
 }
 
 impl GrowthBookFeatureRuleRollout {
-    pub fn conditions(&self) -> Option<Vec<GrowthBookAttribute>> { option_map_to_attributes(self.condition.clone()) }
+    pub fn conditions(&self) -> Option<Vec<GrowthBookAttribute>> {
+        option_map_to_attributes(self.condition.clone())
+    }
 
-    pub fn range(&self) -> Option<Range> { Range::get_range(self.range.clone()) }
+    pub fn range(&self) -> Option<Range> {
+        Range::get_range(self.range.clone())
+    }
 
-    pub fn get_fallback_attribute(&self) -> String { self.fallback_attribute.clone().unwrap_or(String::from("id")) }
+    pub fn get_fallback_attribute(&self) -> String {
+        self.fallback_attribute.clone().unwrap_or(String::from("id"))
+    }
 }
 
 impl GrowthBookFeatureRuleForce {
-    pub fn conditions(&self) -> Option<Vec<GrowthBookAttribute>> { option_map_to_attributes(self.condition.clone()) }
+    pub fn conditions(&self) -> Option<Vec<GrowthBookAttribute>> {
+        option_map_to_attributes(self.condition.clone())
+    }
 
-    pub fn range(&self) -> Option<Range> { Range::get_range(self.range.clone()) }
+    pub fn range(&self) -> Option<Range> {
+        Range::get_range(self.range.clone())
+    }
 
-    pub fn get_fallback_attribute(&self) -> String { String::from("id") }
+    pub fn get_fallback_attribute(&self) -> String {
+        String::from("id")
+    }
 }
 
 impl GrowthBookFeatureRuleExperiment {
@@ -128,10 +142,13 @@ impl GrowthBookFeatureRuleExperiment {
 
     pub fn namespace_range(&self) -> Option<(String, Range)> {
         self.namespace.as_ref().map(|namespace| {
-            (namespace[0].force_string(""), Range {
-                start: namespace[1].force_f32(0.0),
-                end: namespace[2].force_f32(1.0),
-            })
+            (
+                namespace[0].force_string(""),
+                Range {
+                    start: namespace[1].force_f32(0.0),
+                    end: namespace[2].force_f32(1.0),
+                },
+            )
         })
     }
 

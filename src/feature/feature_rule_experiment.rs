@@ -133,7 +133,9 @@ impl GrowthBookFeatureRuleExperiment {
         }
     }
 
-    fn get_fallback_attribute(&self) -> String { self.fallback_attribute.clone().unwrap_or(String::from("id")) }
+    fn get_fallback_attribute(&self) -> String {
+        self.fallback_attribute.clone().unwrap_or(String::from("id"))
+    }
 }
 
 #[allow(clippy::too_many_arguments)]
