@@ -13,3 +13,4 @@ mod infra;
 mod model_private;
 pub mod model_public;
 mod range;
+pub mod filter;
