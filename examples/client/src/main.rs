@@ -12,7 +12,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     loop {
         {
             let feature_name = "rust-sdk-test-feature";
-            println!("total features {:?}", gb_client.total_features().await);
+            println!("total features {:?}", gb_client.total_features());
 
             let on = gb_client.is_on(feature_name, None);
             println!("feature: {} on {:?}", feature_name, on);
