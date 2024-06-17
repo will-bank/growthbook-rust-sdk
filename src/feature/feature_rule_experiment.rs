@@ -7,6 +7,7 @@ use crate::extensions::{FindGrowthBookAttribute, JsonHelper};
 use crate::hash::{HashCode, HashCodeVersion};
 use crate::model_private::{ExperimentResult, FeatureResult};
 use crate::model_public::GrowthBookAttribute;
+use crate::namespace::use_case::Namespace;
 use crate::range::model::Range;
 
 impl GrowthBookFeatureRuleExperiment {
@@ -33,8 +34,7 @@ impl GrowthBookFeatureRuleExperiment {
     ) -> Option<FeatureResult> {
         if let Some(user_value) = user_attributes.find_value(feature_attribute) {
             if let Some((namespace, range)) = &self.namespace_range() {
-                let user_weight = HashCode::hash_code(&format!("{}__", user_value), namespace, HashCodeVersion::from(1)).unwrap_or(-1.0);
-                if !range.in_range(&user_weight) {
+                if !Namespace::is_in(&user_value, namespace, range) {
                     return None;
                 }
             }
