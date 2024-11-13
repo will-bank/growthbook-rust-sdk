@@ -5,7 +5,7 @@ use reqwest_middleware::ClientWithMiddleware;
 
 use crate::dto::GrowthBookResponse;
 use crate::env::Environment;
-use crate::error::GrowthbookError;
+use crate::error::{GrowthbookError, GrowthbookErrorCode};
 use crate::infra::HttpClient;
 
 #[derive(Clone, Debug)]
@@ -37,8 +37,13 @@ impl GrowthbookGateway {
         &self,
         sdk_key: Option<&str>,
     ) -> Result<GrowthBookResponse, GrowthbookError> {
-        let sdk = sdk_key.unwrap_or(self.sdk_key.as_str());
-        let url = format!("{}/api/features/{}", self.url, sdk);
+        let key = sdk_key.unwrap_or(self.sdk_key.as_str());
+        let url = url::Url::parse(self.url.as_str())
+            .map_err(|_| GrowthbookError::new(GrowthbookErrorCode::GenericError, "cannot parse url"))?;
+        let url = url.join(&format!("/api/features/{}", key))
+            .map_err(|_| GrowthbookError::new(GrowthbookErrorCode::GenericError, "cannot join url with api path"))?;
+
+        let url = format!("{}", url);
         let send_result = self.client.get(url).header(USER_AGENT, self.user_agent.clone()).send().await.map_err(GrowthbookError::from)?;
 
         let response = send_result.json::<GrowthBookResponse>().await.map_err(GrowthbookError::from)?;
