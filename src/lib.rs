@@ -11,7 +11,7 @@ mod gateway;
 mod growthbook;
 mod hash;
 mod infra;
-mod model_private;
+pub mod model_private;
 pub mod model_public;
 pub mod namespace;
 mod range;
