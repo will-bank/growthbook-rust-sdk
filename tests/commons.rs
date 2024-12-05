@@ -260,6 +260,12 @@ pub async fn all_cases(
             "simple-flag": {
                 "defaultValue": true
             },
+            "is-off-string-flag": {
+                "defaultValue": "OFF"
+            },
+            "is-off-empty-string-flag": {
+                "defaultValue": ""
+            },
             "simple-flag-disabled": {
                 "defaultValue": false
             },
