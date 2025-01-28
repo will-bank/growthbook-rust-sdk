@@ -14,32 +14,48 @@ repository = "https://github.com/will-bank/growthbook-rust-sdk"
 keywords = ["growthbook", "experiment", "feature", "flag"]
 categories = ["web-programming"]
 
+[features]
+default = [
+    "dep:tokio",
+    "dep:hashers",
+    "dep:reqwest",
+    "dep:reqwest-middleware",
+    "dep:serde",
+    "dep:serde_json",
+    "dep:reqwest-tracing",
+    "dep:tracing",
+    "dep:strum",
+    "dep:strum_macros",
+    "dep:lazy_static",
+    "dep:chrono",
+    "dep:regex",
+    "dep:indexmap",
+]
+
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-tokio = { version = "1.38.0", features = ["full"] }
-hashers = { version = "1.0.1" }
+tokio = { version = "1.38.0", features = ["full"], optional = true }
+hashers = { version = "1.0.1", optional = true }
 
-reqwest = { version = "0.12.4", default-features = false, features = ["json", "rustls-tls"] }
-reqwest-middleware = { version = "0.4.0" }
+reqwest = { version = "0.12.4", default-features = false, features = ["json", "rustls-tls"], optional = true }
+reqwest-middleware = { version = "0.4.0", optional = true }
 
-strum = { version = "0.26.1" }
-strum_macros = { version = "0.26.1" }
+strum = { version = "0.26.1", optional = true }
+strum_macros = { version = "0.26.1", optional = true }
 
-serde = { version = "1.0.196", features = ["derive"] }
-serde_json = { version = "1.0.113", features = ["preserve_order"] }
+serde = { version = "1.0.203", features = ["derive"], optional = true }
+serde_json = { version = "1.0.113", features = ["preserve_order"], optional = true }
 
-reqwest-tracing = { version = "0.5.4", features = ["opentelemetry_0_21"] }
-tracing = { version = "0.1.40" }
+reqwest-tracing = { version = "0.5.4", features = ["opentelemetry_0_21"], optional = true }
+tracing = { version = "0.1.40", optional = true }
 
-lazy_static = { version = "1.4.0" }
-chrono = { version = "0.4.38" }
-regex = { version = "1.10.4" }
-indexmap = { version = "2.2.6" }
+lazy_static = { version = "1.4.0", optional = true }
+chrono = { version = "0.4.38", optional = true }
+regex = { version = "1.10.4", optional = true }
+indexmap = { version = "2.2.6", optional = true }
 
 [dev-dependencies]
-tower = { version = "0.4.13", features = ["util"] }
-
 rstest = { version = "0.21.0" }
 test-context = { version = "0.3.0" }
 
