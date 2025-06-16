@@ -1,10 +1,10 @@
 [package]
 name = "growthbook-rust-sdk"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2021"
 authors = [
     "Deroldo <diogo.fernandes@willbank.com.br",
-    "Alefh Sousa <alefh.sousa@gmail.com>"
+    "Alefh Sousa <alefh.sousa@gmail.com>",
 ]
 license = "MIT"
 description = "unofficial growthbook rust sdk"
@@ -20,7 +20,10 @@ categories = ["web-programming"]
 tokio = { version = "1.38.0", features = ["full"] }
 hashers = { version = "1.0.1" }
 
-reqwest = { version = "0.12.4", default-features = false, features = ["json", "rustls-tls"] }
+reqwest = { version = "0.12.4", default-features = false, features = [
+    "json",
+    "rustls-tls",
+] }
 reqwest-middleware = { version = "0.4.0" }
 
 strum = { version = "0.26.1" }
