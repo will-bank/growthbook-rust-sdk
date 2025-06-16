@@ -21,7 +21,9 @@ impl HttpClient {
         let default_config_client = Client::builder()
             .timeout(timeout_duration)
             .pool_idle_timeout(None)
-            .default_headers(default_headers).build().map_err(GrowthbookError::from)?;
+            .default_headers(default_headers)
+            .build()
+            .map_err(GrowthbookError::from)?;
 
         let client = ClientBuilder::new(default_config_client)
             .with_init(Extension(OtelName(String::from(name).into())))
