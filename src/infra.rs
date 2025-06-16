@@ -1,5 +1,6 @@
 use std::time::Duration;
 
+use reqwest::header::{HeaderMap, HeaderValue, CONNECTION};
 use reqwest::Client;
 use reqwest_middleware::{ClientBuilder, ClientWithMiddleware, Extension};
 use reqwest_tracing::{OtelName, TracingMiddleware};
@@ -13,7 +14,13 @@ impl HttpClient {
         name: &str,
         timeout_duration: Duration,
     ) -> Result<ClientWithMiddleware, GrowthbookError> {
-        let client = ClientBuilder::new(Client::builder().timeout(timeout_duration).build().map_err(GrowthbookError::from)?)
+        let mut default_headers = HeaderMap::new();
+        //keep connection alive off by default
+        default_headers.insert(CONNECTION, HeaderValue::from_static("close"));
+
+        let default_config_client = Client::builder().timeout(timeout_duration).default_headers(default_headers).build().map_err(GrowthbookError::from)?;
+
+        let client = ClientBuilder::new(default_config_client)
             .with_init(Extension(OtelName(String::from(name).into())))
             .with(TracingMiddleware::default())
             .build();
