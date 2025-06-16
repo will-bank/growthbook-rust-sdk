@@ -18,7 +18,10 @@ impl HttpClient {
         //keep connection alive off by default
         default_headers.insert(CONNECTION, HeaderValue::from_static("close"));
 
-        let default_config_client = Client::builder().timeout(timeout_duration).default_headers(default_headers).build().map_err(GrowthbookError::from)?;
+        let default_config_client = Client::builder()
+            .timeout(timeout_duration)
+            .pool_idle_timeout(None)
+            .default_headers(default_headers).build().map_err(GrowthbookError::from)?;
 
         let client = ClientBuilder::new(default_config_client)
             .with_init(Extension(OtelName(String::from(name).into())))
