@@ -22,7 +22,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
             let string_feature = gb_client.feature_result(feature_name, None);
             let string = string_feature.value_as::<String>()?;
-            println!("feature: {} string value {:?}", feature_name, string)
+            println!("feature: {} string value {:?}", feature_name, string);
 
             let custom_feature = gb_client.feature_result(feature_name, None);
             let custom = custom_feature.value_as::<Custom>()?;
