@@ -13,5 +13,9 @@ mod hash;
 mod infra;
 mod model_private;
 pub mod model_public;
+
+#[cfg(feature = "mocker")]
+pub mod mocker;
+
 pub mod namespace;
 mod range;

@@ -6,11 +6,7 @@ pub struct Range {
 impl Range {
     pub fn get_range(range: Option<Vec<f32>>) -> Option<Range> {
         if let Some(range) = range {
-            if range.len() == 2 {
-                Some(Range { start: range[0], end: range[1] })
-            } else {
-                None
-            }
+            if range.len() == 2 { Some(Range { start: range[0], end: range[1] }) } else { None }
         } else {
             None
         }
@@ -84,7 +80,7 @@ mod test {
     use serde::Deserialize;
     use serde_json::Value;
 
-    use crate::range::model::{get_equal_weights, Range};
+    use crate::range::model::{Range, get_equal_weights};
 
     #[tokio::test]
     async fn evaluate_get_bucket_range() -> Result<(), Box<dyn std::error::Error>> {

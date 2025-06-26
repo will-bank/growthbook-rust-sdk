@@ -176,11 +176,7 @@ fn and_nor(
         GrowthBookAttributeValue::Array(it) => it.iter().all(|next_value| match next_value {
             GrowthBookAttributeValue::Object(feature_value) => {
                 let result = feature_value.iter().all(|next_attribute| recursive(None, next_attribute, user_attributes, false));
-                if negate {
-                    !result
-                } else {
-                    result
-                }
+                if negate { !result } else { result }
             },
             _ => false,
         }),

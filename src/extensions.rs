@@ -77,11 +77,7 @@ impl JsonHelper for Value {
         &self,
         default: &str,
     ) -> String {
-        if self.is_string() {
-            self.as_str().unwrap_or(default).to_string()
-        } else {
-            self.to_string()
-        }
+        if self.is_string() { self.as_str().unwrap_or(default).to_string() } else { self.to_string() }
     }
 
     fn force_f32(
