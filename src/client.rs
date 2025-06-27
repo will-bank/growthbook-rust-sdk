@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::fmt::Debug;
 use std::sync::{Arc, RwLock};
 use std::time::Duration;
 
@@ -12,7 +13,7 @@ use crate::growthbook::GrowthBook;
 use crate::model_private::FeatureResult;
 use crate::model_public::GrowthBookAttribute;
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct GrowthBookClient {
     pub gb: Arc<RwLock<GrowthBook>>,
 }
@@ -38,6 +39,28 @@ async fn updated_features_task(
         }
         sleep(interval).await;
     }
+}
+
+pub trait GrowthBookClientTrait: Debug + Send + Sync {
+    fn is_on(
+        &self,
+        feature_name: &str,
+        user_attributes: Option<Vec<GrowthBookAttribute>>,
+    ) -> bool;
+
+    fn is_off(
+        &self,
+        feature_name: &str,
+        user_attributes: Option<Vec<GrowthBookAttribute>>,
+    ) -> bool;
+
+    fn feature_result(
+        &self,
+        feature_name: &str,
+        user_attributes: Option<Vec<GrowthBookAttribute>>,
+    ) -> FeatureResult;
+
+    fn total_features(&self) -> usize;
 }
 
 impl GrowthBookClient {
@@ -70,35 +93,6 @@ impl GrowthBookClient {
         Ok(GrowthBookClient { gb: growthbook_writable })
     }
 
-    pub fn is_on(
-        &self,
-        feature_name: &str,
-        user_attributes: Option<Vec<GrowthBookAttribute>>,
-    ) -> bool {
-        self.read_gb().check(feature_name, &user_attributes).on
-    }
-
-    pub fn is_off(
-        &self,
-        feature_name: &str,
-        user_attributes: Option<Vec<GrowthBookAttribute>>,
-    ) -> bool {
-        self.read_gb().check(feature_name, &user_attributes).off
-    }
-
-    pub fn feature_result(
-        &self,
-        feature_name: &str,
-        user_attributes: Option<Vec<GrowthBookAttribute>>,
-    ) -> FeatureResult {
-        self.read_gb().check(feature_name, &user_attributes)
-    }
-
-    pub fn total_features(&self) -> usize {
-        let gb_data = self.read_gb();
-        gb_data.features.len()
-    }
-
     fn read_gb(&self) -> GrowthBook {
         match self.gb.read() {
             Ok(rw_read_guard) => (*rw_read_guard).clone(),
@@ -110,5 +104,36 @@ impl GrowthBookClient {
                 }
             },
         }
+    }
+}
+
+impl GrowthBookClientTrait for GrowthBookClient {
+    fn is_on(
+        &self,
+        feature_name: &str,
+        user_attributes: Option<Vec<GrowthBookAttribute>>,
+    ) -> bool {
+        self.read_gb().check(feature_name, &user_attributes).on
+    }
+
+    fn is_off(
+        &self,
+        feature_name: &str,
+        user_attributes: Option<Vec<GrowthBookAttribute>>,
+    ) -> bool {
+        self.read_gb().check(feature_name, &user_attributes).off
+    }
+
+    fn feature_result(
+        &self,
+        feature_name: &str,
+        user_attributes: Option<Vec<GrowthBookAttribute>>,
+    ) -> FeatureResult {
+        self.read_gb().check(feature_name, &user_attributes)
+    }
+
+    fn total_features(&self) -> usize {
+        let gb_data = self.read_gb();
+        gb_data.features.len()
     }
 }
