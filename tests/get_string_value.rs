@@ -2,6 +2,7 @@ mod commons;
 
 #[cfg(test)]
 mod test {
+    use growthbook_rust_sdk::client::GrowthBookClientTrait;
     use rstest::rstest;
     use test_context::test_context;
 

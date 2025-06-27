@@ -2,7 +2,7 @@ mod commons;
 
 #[cfg(test)]
 mod test {
-    use growthbook_rust_sdk::model_public::GrowthBookAttribute;
+    use growthbook_rust_sdk::{client::GrowthBookClientTrait, model_public::GrowthBookAttribute};
     use rstest::rstest;
     use serde_json::json;
     use test_context::test_context;

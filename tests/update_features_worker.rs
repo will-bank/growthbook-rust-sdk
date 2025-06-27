@@ -4,7 +4,7 @@ mod commons;
 mod test {
     use std::time::Duration;
 
-    use growthbook_rust_sdk::client::GrowthBookClient;
+    use growthbook_rust_sdk::client::{GrowthBookClient, GrowthBookClientTrait};
     use uuid::Uuid;
     use wiremock::matchers::{method, path};
     use wiremock::{Mock, MockServer, ResponseTemplate};

@@ -4,7 +4,7 @@ use crate::dto::GrowthBookFeature;
 use crate::model_private::FeatureResult;
 use crate::model_public::GrowthBookAttribute;
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct GrowthBook {
     pub forced_variations: Option<HashMap<String, i64>>,
     pub features: HashMap<String, GrowthBookFeature>,
