@@ -24,7 +24,6 @@ pub enum GrowthBookAttributeValue {
     Object(Vec<GrowthBookAttribute>),
 }
 
-// FeatureResult moved from model_private to model_public for testability
 #[derive(Serialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct FeatureResult {
@@ -185,7 +184,6 @@ impl FeatureResult {
         serde_json::from_value(self.value.clone()).map_err(GrowthbookError::from)
     }
 
-    // Public constructors for testing and mocking
     pub fn new(
         value: Value,
         on: bool,
