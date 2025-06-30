@@ -1,8 +1,7 @@
 use std::collections::HashMap;
 
 use crate::dto::GrowthBookFeature;
-use crate::model_private::FeatureResult;
-use crate::model_public::GrowthBookAttribute;
+use crate::model_public::{FeatureResult, GrowthBookAttribute};
 
 #[derive(Debug, Clone)]
 pub struct GrowthBook {
@@ -36,7 +35,7 @@ mod test {
     use crate::dto::GrowthBookFeature;
     use crate::extensions::JsonHelper;
     use crate::growthbook::GrowthBook;
-    use crate::model_private::FeatureResult;
+    use crate::model_public::FeatureResult;
     use crate::model_public::GrowthBookAttribute;
 
     #[tokio::test]

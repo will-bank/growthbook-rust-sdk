@@ -1,7 +1,6 @@
 use crate::condition::use_case::ConditionsMatchesAttributes;
 use crate::dto::GrowthBookFeatureRuleParentData;
-use crate::model_private::FeatureResult;
-use crate::model_public::{GrowthBookAttribute, GrowthBookAttributeValue};
+use crate::model_public::{FeatureResult, GrowthBookAttribute, GrowthBookAttributeValue};
 
 impl GrowthBookFeatureRuleParentData {
     pub fn is_met(

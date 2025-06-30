@@ -5,8 +5,7 @@ use serde_json::Value;
 use crate::dto::GrowthBookFeatureRuleExperiment;
 use crate::extensions::{FindGrowthBookAttribute, JsonHelper};
 use crate::hash::{HashCode, HashCodeVersion};
-use crate::model_private::{ExperimentResult, FeatureResult};
-use crate::model_public::GrowthBookAttribute;
+use crate::model_public::{ExperimentResult, FeatureResult, GrowthBookAttribute};
 use crate::namespace::use_case::Namespace;
 use crate::range::model::Range;
 

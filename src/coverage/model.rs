@@ -1,8 +1,7 @@
 use serde_json::Value;
 
 use crate::hash::{HashCode, HashCodeVersion};
-use crate::model_private::FeatureResult;
-use crate::model_public::GrowthBookAttributeValue;
+use crate::model_public::{FeatureResult, GrowthBookAttributeValue};
 use crate::range::model::Range;
 
 pub struct Coverage;

@@ -4,8 +4,7 @@ use serde::Deserialize;
 use serde_json::Value;
 
 use crate::extensions::JsonHelper;
-use crate::model_private::Experiment;
-use crate::model_public::{GrowthBookAttribute, GrowthBookAttributeValue};
+use crate::model_public::{Experiment, GrowthBookAttribute, GrowthBookAttributeValue};
 use crate::range::model::Range;
 
 #[derive(Deserialize, Clone, Default)]

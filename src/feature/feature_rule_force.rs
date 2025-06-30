@@ -3,8 +3,7 @@ use crate::coverage::model::Coverage;
 use crate::dto::GrowthBookFeatureRuleForce;
 use crate::extensions::FindGrowthBookAttribute;
 use crate::filter::use_case::Filter;
-use crate::model_private::FeatureResult;
-use crate::model_public::GrowthBookAttribute;
+use crate::model_public::{FeatureResult, GrowthBookAttribute};
 
 impl GrowthBookFeatureRuleForce {
     pub fn get_match_value(

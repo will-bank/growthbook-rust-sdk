@@ -2,8 +2,7 @@ use crate::condition::use_case::ConditionsMatchesAttributes;
 use crate::coverage::model::Coverage;
 use crate::dto::GrowthBookFeatureRuleRollout;
 use crate::extensions::FindGrowthBookAttribute;
-use crate::model_private::FeatureResult;
-use crate::model_public::GrowthBookAttribute;
+use crate::model_public::{FeatureResult, GrowthBookAttribute};
 
 impl GrowthBookFeatureRuleRollout {
     pub fn get_match_value(
