@@ -5,6 +5,34 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2025-01-27
+
+### 🧪 Testing Improvements
+- **Enhanced Testability**: Moved `FeatureResult`, `Experiment`, and `ExperimentResult` from `model_private` to `model_public`
+  - Enables creation of mock `FeatureResult` instances for testing
+  - Allows custom implementations of `GrowthBookClientTrait` for unit tests
+  - Provides public constructors for easier test setup
+  - Supports mocking feature flag responses in integration tests
+
+### 🔧 API Improvements
+- **Public Constructors**: Added `FeatureResult::new()` constructor for custom instances
+  - Enables creation of test-specific `FeatureResult` instances
+  - Maintains all existing constructors (`force()`, `experiment()`, etc.)
+  - No breaking changes to existing API
+
+### 🏗️ Architecture
+- **Module Reorganization**: Removed `model_private.rs` module
+  - All structures now properly accessible for testing
+  - Cleaner module structure with better separation of concerns
+  - Maintains backward compatibility
+
+### 📝 Documentation
+- **Updated Examples**: Enhanced client example with `FeatureResult` usage demonstration
+  - Shows how to create custom `FeatureResult` instances
+  - Demonstrates test-friendly API design
+
+---
+
 ## [1.0.0] - 2025-01-27
 
 ### 🚀 Features
@@ -60,7 +88,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Breaking Changes
 
-### ⚠️ Version 1.1.2
+### ⚠️ Version 1.1.0
+**No breaking changes** - All changes are fully backward compatible:
+
+- ✅ **Existing code continues to work unchanged**
+- ✅ **All public APIs remain the same**
+- ✅ **No changes to method signatures**
+- ✅ **No changes to return types**
+- ✅ **No changes to error handling**
+- ✅ **FeatureResult constructors remain the same**
+
+### Migration Guide
+No migration required. The changes are additive and improve testability:
+
+```rust
+// Before (still works):
+let result = client.feature_result("feature", None);
+assert!(result.on);
+
+// After (same behavior, plus new capabilities):
+let result = client.feature_result("feature", None);
+assert!(result.on);
+
+// New capability - create custom FeatureResult for testing:
+let mock_result = FeatureResult::new(
+    serde_json::json!("test-value"),
+    true,
+    "test".to_string()
+);
+```
+
+### ⚠️ Version 1.0.0
 **No breaking changes** - The addition of `GrowthBookClientTrait` is fully backward compatible:
 
 - ✅ **Existing code continues to work unchanged**
@@ -102,7 +160,7 @@ let is_on = boxed_client.is_on("feature", None);
 
 ## Contributors
 
-- @gabrielsartorato - Added GrowthBookClientTrait
+- @gabrielsartorato - Enhanced testability and GrowthBookClientTrait
 - @carlos.marega - HTTP connection improvements
 - @fernando.goncalves - Version management
 
@@ -111,6 +169,7 @@ let is_on = boxed_client.is_on("feature", None);
 ## Notes
 
 - This release maintains full backward compatibility
-- The trait addition enables future extensibility without breaking existing code
+- The changes improve testability without breaking existing code
 - All existing functionality remains unchanged
-- Performance characteristics are identical to previous versions 
+- Performance characteristics are identical to previous versions
+- Enhanced support for unit testing and mocking scenarios 
