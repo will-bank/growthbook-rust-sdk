@@ -10,8 +10,7 @@ use crate::env::Environment;
 use crate::error::GrowthbookError;
 use crate::gateway::GrowthbookGateway;
 use crate::growthbook::GrowthBook;
-use crate::model_private::FeatureResult;
-use crate::model_public::GrowthBookAttribute;
+use crate::model_public::{FeatureResult, GrowthBookAttribute};
 
 #[derive(Debug, Clone)]
 pub struct GrowthBookClient {

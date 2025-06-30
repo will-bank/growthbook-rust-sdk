@@ -1,8 +1,7 @@
 use std::collections::HashMap;
 
 use crate::dto::{GrowthBookFeature, GrowthBookFeatureRule};
-use crate::model_private::FeatureResult;
-use crate::model_public::GrowthBookAttribute;
+use crate::model_public::{FeatureResult, GrowthBookAttribute};
 
 impl GrowthBookFeature {
     pub fn get_value(
