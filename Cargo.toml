@@ -32,10 +32,10 @@ default = [
 mocker = ["wiremock", "rand", "uuid"]
 
 [dependencies]
-tokio = { version = "1.45.1", features = ["full"], optional = true }
+tokio = { version = "1.46.1", features = ["full"], optional = true }
 hashers = { version = "1.0.1" , optional = true}
 
-reqwest = { version = "0.12.18", default-features = false, features = [
+reqwest = { version = "0.12.22", default-features = false, features = [
     "json",
     "rustls-tls",
 ] , optional = true}
@@ -45,14 +45,14 @@ reqwest-middleware = { version = "0.4.2", optional = true }
 serde = { version = "1.0.219", features = ["derive"], optional = true }
 serde_json = { version = "1.0.140", features = ["preserve_order"] , optional = true}
 
-reqwest-tracing = { version = "0.5.7", features = ["opentelemetry_0_21"] , optional = true}
+reqwest-tracing = { version = "0.5.8", features = ["opentelemetry_0_21"] , optional = true}
 tracing = { version = "0.1.41" , optional = true}
 
 chrono = { version = "0.4.41" , optional = true}
 regex = { version = "1.11.1" , optional = true}
 
 # Dependências opcionais para a feature mocker
-wiremock = { version = "0.6.3", optional = true }
+wiremock = { version = "0.6.4", optional = true }
 rand = { version = "0.9.1", optional = true }
 uuid = { version = "1.17.0", features = ["v7", "serde"], optional = true }
 
