@@ -6,6 +6,7 @@ use std::time::Duration;
 use tokio::time::sleep;
 use tracing::error;
 
+use crate::dto::GrowthBookResponse;
 use crate::env::Environment;
 use crate::error::GrowthbookError;
 use crate::gateway::GrowthbookGateway;
@@ -90,6 +91,15 @@ impl GrowthBookClient {
         });
 
         Ok(GrowthBookClient { gb: growthbook_writable })
+    }
+
+    pub fn from_features(response: GrowthBookResponse) -> Self {
+        GrowthBookClient {
+            gb: Arc::new(RwLock::new(GrowthBook {
+                forced_variations: response.forced_variations,
+                features: response.features,
+            })),
+        }
     }
 
     fn read_gb(&self) -> GrowthBook {
