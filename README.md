@@ -2,6 +2,10 @@
 
 [![Crates.io](https://img.shields.io/crates/l/datadog-tracing)](LICENSE)
 
+> **⚠️ Project No Longer Maintained**
+> 
+> This project is no longer maintained since Will Bank was liquidated by Brazil Central Bank. Feel free to fork the project and continue development.
+
 Non-official GrowthBook SDK for Rust services.
 
 This crate provide an easy way to retrieve a feature value using SDK-KEY.
