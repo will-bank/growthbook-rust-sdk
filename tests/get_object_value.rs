@@ -8,8 +8,8 @@ mod test {
     use rstest::rstest;
     use test_context::test_context;
 
-    use crate::commons::TestContext;
     use crate::ObjectValue;
+    use crate::commons::TestContext;
 
     #[test_context(TestContext)]
     #[rstest]

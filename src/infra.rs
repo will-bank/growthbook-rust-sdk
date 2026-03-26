@@ -1,7 +1,7 @@
 use std::time::Duration;
 
-use reqwest::header::{HeaderMap, HeaderValue, CONNECTION};
 use reqwest::Client;
+use reqwest::header::{CONNECTION, HeaderMap, HeaderValue};
 use reqwest_middleware::{ClientBuilder, ClientWithMiddleware, Extension};
 use reqwest_tracing::{OtelName, TracingMiddleware};
 

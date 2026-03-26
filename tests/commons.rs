@@ -3,7 +3,7 @@ use std::net::{SocketAddr, TcpListener};
 use growthbook_rust_sdk::client::GrowthBookClient;
 use rand::Rng;
 use reqwest::StatusCode;
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 use test_context::AsyncTestContext;
 use uuid::Uuid;
 use wiremock::matchers::{method, path};
@@ -334,7 +334,7 @@ async fn mock(
 pub async fn create_mock_server() -> MockServer {
     for _ in 1..10 {
         // try to start mock server in a random port 10 times
-        let port = rand::thread_rng().gen_range(51000..54000);
+        let port = rand::rng().random_range(51000..54000);
         let addr = SocketAddr::from(([0, 0, 0, 0], port));
         if let Ok(listener) = TcpListener::bind(addr) {
             let mock_server = MockServer::builder().listener(listener).start().await;

@@ -12,5 +12,9 @@ mod growthbook;
 mod hash;
 mod infra;
 pub mod model_public;
+
+#[cfg(feature = "mocker")]
+pub mod mocker;
+
 pub mod namespace;
 mod range;
